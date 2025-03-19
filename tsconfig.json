@@ -12,5 +12,6 @@
     "rootDir": "./src"
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["node_modules", "dist", "build", "out"]
+  "exclude": ["node_modules", "dist", "build", "out"],
+  "types": ["miniprogram-api-typings"]
 }

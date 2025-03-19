@@ -67,6 +67,7 @@
     "eslint-plugin-prettier": "^5.2.1",
     "globals": "^16.0.0",
     "husky": "^9.1.7",
+    "miniprogram-api-typings": "^4.0.5",
     "prettier": "^3.5.3",
     "typescript-eslint": "^8.26.0",
     "vite": "^6.2.0",

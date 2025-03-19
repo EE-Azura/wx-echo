@@ -5,21 +5,21 @@
 export interface Context {
   /**
    * 请求相关数据
-   * @type {any}
+   * @type {unknown}
    */
-  request?: any;
+  request?: unknown;
 
   /**
    * 响应相关数据
-   * @type {any}
+   * @type {unknown}
    */
-  response?: any;
+  response?: unknown;
 
   /**
    * 允许存储任意其他键值对
-   * @type {any}
+   * @type {unknown}
    */
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
@@ -39,3 +39,75 @@ export type MiddlewareFunction = (ctx: Context, next: () => Promise<void>) => Pr
  * @returns {Promise<void>|void} 可以是异步或同步函数
  */
 export type ErrorHandlerFunction = (err: Error, ctx: Context) => Promise<void> | void;
+
+/**
+ * BreezeRequestOptions 接口定义
+ * @interface BreezeRequestOptions
+ */
+export interface BreezeRequestOptions {
+  /**
+   * 请求头
+   * @type {Record<string, string>}
+   */
+  headers?: Record<string, string>;
+
+  /**
+   * 超时时间
+   * @type {number}
+   */
+  timeout?: number;
+
+  /**
+   * 响应类型
+   * @type {string}
+   */
+  responseType?: string;
+
+  /**
+   * 其他选项
+   * @type {Record<string, unknown>}
+   */
+  [key: string]: unknown;
+}
+
+/**
+ * BreezeRequestConfig 接口定义
+ * @interface BreezeRequestConfig
+ */
+export interface BreezeRequestConfig {
+  /**
+   * 请求地址
+   * @type {string}
+   */
+  url: string;
+
+  /**
+   * 请求数据
+   * @type {unknown}
+   */
+  data?: unknown;
+
+  /**
+   * 请求选项
+   * @type {BreezeRequestOptions}
+   */
+  options?: BreezeRequestOptions;
+
+  /**
+   * 请求方法
+   * @type {string}
+   */
+  method?: string;
+
+  /**
+   * 获取请求任务的回调函数
+   * @type {Function}
+   */
+  getTaskHandle?: (task: unknown) => void;
+}
+
+/**
+ * BreezeRequest 函数类型定义
+ * @callback BreezeRequestCustom
+ */
+export type BreezeRequestCustom = (params: BreezeRequestConfig) => Promise<unknown>;
