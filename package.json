@@ -1,0 +1,79 @@
+{
+  "name": "breeze-request",
+  "version": "0.1.0",
+  "description": "",
+  "type": "module",
+  "main": "dist/breeze-request.js",
+  "commonjs": "dist/breeze-request.cjs",
+  "module": "./dist/breeze-request.js",
+  "types": "./dist/breeze-request.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/breeze-request.js",
+      "require": "./dist/breeze-request.cjs",
+      "types": "./dist/breeze-request.d.ts"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "test": "npm run build && vitest run",
+    "test:compat": "npm run build && vitest run compat-tests",
+    "lint": "eslint \"src/**/*.{ts, js}\"",
+    "format": "prettier --write .",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "src/**/*.{ts,js}": [
+      "prettier --write",
+      "eslint --fix",
+      "git add"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EE-Azura/breeze-request.git"
+  },
+  "keywords": [
+    "nodejs",
+    "javascript",
+    "typescript",
+    "queue",
+    "priority-queue",
+    "task-scheduler",
+    "async",
+    "concurrency",
+    "concurrency-control",
+    "throttle",
+    "rate-limiting",
+    "task-manager",
+    "promise",
+    "event-driven",
+    "multi-priority"
+  ],
+  "author": "EE_Azura",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/EE-Azura/breeze-request/issues"
+  },
+  "homepage": "https://github.com/EE-Azura/breeze-request#readme",
+  "devDependencies": {
+    "@eslint/js": "^9.21.0",
+    "@types/node": "^22.13.9",
+    "eslint": "^9.21.0",
+    "eslint-config-prettier": "^10.0.2",
+    "eslint-plugin-prettier": "^5.2.1",
+    "globals": "^16.0.0",
+    "husky": "^9.1.7",
+    "prettier": "^3.5.3",
+    "typescript-eslint": "^8.26.0",
+    "vite": "^6.2.0",
+    "vite-plugin-dts": "^4.5.3",
+    "vitest": "^3.0.7"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "^4.24.0"
+  }
+}
