@@ -1,19 +1,27 @@
-/**
- * 在拦截器之间传递的上下文对象
- * @interface Context
- */
-export interface Context {
+export interface BreezeContext<TReq = unknown, TRes = unknown> {
   /**
    * 请求相关数据
-   * @type {unknown}
+   * @type {BreezeRequestConfig}
    */
-  request?: unknown;
+  request: BreezeRequestConfig<TReq>;
 
   /**
    * 响应相关数据
    * @type {unknown}
    */
-  response?: unknown;
+  response?: TRes;
+
+  /**
+   * 错误信息
+   * @type {unknown}
+   */
+  error?: unknown;
+
+  /**
+   * 错误是否已处理
+   * @type {boolean}
+   */
+  errorHandled?: boolean;
 
   /**
    * 允许存储任意其他键值对
@@ -22,28 +30,12 @@ export interface Context {
   [key: string]: unknown;
 }
 
-/**
- * 中间件函数类型定义
- * @callback MiddlewareFunction
- * @param {Context} ctx - 上下文对象，包含请求和响应信息
- * @param {Function} next - 调用下一个中间件的函数
- * @returns {Promise<void>|void} 可以是异步或同步函数
- */
-export type MiddlewareFunction = (ctx: Context, next: () => Promise<void>) => Promise<void> | void;
+export type BreezeNext = () => Promise<void>;
 
-/**
- * 错误处理中间件函数类型定义
- * @callback ErrorHandlerFunction
- * @param {Error} err - 捕获到的错误对象
- * @param {Context} ctx - 上下文对象，包含请求和响应信息
- * @returns {Promise<void>|void} 可以是异步或同步函数
- */
-export type ErrorHandlerFunction = (err: Error, ctx: Context) => Promise<void> | void;
+export type BreezeMiddleware<TReq = unknown, TRes = unknown> = (ctx: BreezeContext<TReq, TRes>, next: BreezeNext) => Promise<void> | void;
 
-/**
- * BreezeRequestOptions 接口定义
- * @interface BreezeRequestOptions
- */
+export type BreezeErrorHandler<TReq = unknown, TRes = unknown> = (err: Error, ctx: BreezeContext<TReq, TRes>) => Promise<void> | void;
+
 export interface BreezeRequestOptions {
   /**
    * 请求头
@@ -58,6 +50,13 @@ export interface BreezeRequestOptions {
   timeout?: number;
 
   /**
+   * 请求方法
+   * @type {string}
+   * @default 'GET'
+   */
+  method?: string;
+
+  /**
    * 响应类型
    * @type {string}
    */
@@ -70,11 +69,7 @@ export interface BreezeRequestOptions {
   [key: string]: unknown;
 }
 
-/**
- * BreezeRequestConfig 接口定义
- * @interface BreezeRequestConfig
- */
-export interface BreezeRequestConfig {
+export interface BreezeRequestConfig<T = unknown> {
   /**
    * 请求地址
    * @type {string}
@@ -85,7 +80,7 @@ export interface BreezeRequestConfig {
    * 请求数据
    * @type {unknown}
    */
-  data?: unknown;
+  data?: T;
 
   /**
    * 请求选项
@@ -94,20 +89,10 @@ export interface BreezeRequestConfig {
   options?: BreezeRequestOptions;
 
   /**
-   * 请求方法
-   * @type {string}
-   */
-  method?: string;
-
-  /**
    * 获取请求任务的回调函数
    * @type {Function}
    */
   getTaskHandle?: (task: unknown) => void;
 }
 
-/**
- * BreezeRequest 函数类型定义
- * @callback BreezeRequestCustom
- */
-export type BreezeRequestCustom = (params: BreezeRequestConfig) => Promise<unknown>;
+export type BreezeRequestCustom<TReq = unknown, TRes = unknown> = (params: BreezeRequestConfig<TReq>) => Promise<TRes>;

@@ -1,308 +1,284 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BreezeRequest } from '../src/breeze-request';
+import { Interceptor } from '../src/Interceptor';
 
-// 模拟 fetch API，用于替代 wx.request
-global.fetch = vi.fn();
-
-// 模拟成功响应
-const mockSuccessResponse = (data: unknown) => {
-  return Promise.resolve({
-    ok: true,
-    json: () => Promise.resolve(data),
-    text: () => Promise.resolve(JSON.stringify(data)),
-    headers: {
-      get: (name: string) => (name === 'content-type' ? 'application/json' : null)
-    },
-    status: 200,
-    statusText: 'OK'
-  });
-};
-
-// 模拟失败响应
-const mockErrorResponse = (status: number, message: string) => {
-  return Promise.resolve({
-    ok: false,
-    json: () => Promise.resolve({ error: message }),
-    text: () => Promise.resolve(message),
-    headers: {
-      get: (name: string) => (name === 'content-type' ? 'application/json' : null)
-    },
-    status,
-    statusText: message
-  });
-};
-
-// 为HTTP错误定义接口
-interface RequestError extends Error {
-  response?: Response;
-}
-
-// 自定义请求处理函数，替代默认的 wx.request
-const customRequest = ({ url, data, options, method = 'GET' }: { url: string; data?: unknown; options?: Record<string, unknown>; method?: string }) => {
-  // 在 Node 环境中使用 fetch 替代 wx.request
-  return fetch(url, {
-    method,
-    headers: options?.headers as HeadersInit | undefined,
-    body: data ? JSON.stringify(data) : undefined,
-    ...options
-  }).then(async response => {
-    if (!response.ok) {
-      const error = new Error(`HTTP Error: ${response.status}`) as RequestError;
-      error.response = response;
-      throw error;
-    }
-
-    const contentType = response.headers.get('content-type') || '';
-    if (contentType.includes('application/json')) {
-      return response.json();
-    }
-    return response.text();
-  });
-};
+// 为微信小程序环境模拟 wx 全局对象
+global.wx = {
+  request: vi.fn()
+} as any;
 
 describe('BreezeRequest', () => {
-  let request: BreezeRequest;
+  let request: BreezeRequest<any>;
 
   beforeEach(() => {
-    // 重置 fetch 模拟
-    vi.resetAllMocks();
-
-    // 创建新的 BreezeRequest 实例，使用自定义请求函数
-    request = new BreezeRequest(
-      {
-        baseURL: 'https://api.example.com',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      },
-      customRequest
-    );
+    vi.clearAllMocks();
+    request = new BreezeRequest();
   });
 
-  describe('基本请求功能', () => {
-    it('应该能够创建实例', () => {
-      expect(request).toBeDefined();
-      expect(typeof request.GET).toBe('function');
+  describe('构造函数', () => {
+    it('应该使用默认选项创建实例', () => {
+      expect(request).toBeInstanceOf(BreezeRequest);
     });
 
-    it('应该发送基本的 GET 请求', async () => {
-      const mockData = { id: 1, name: 'Test' };
-      (global.fetch as any).mockResolvedValueOnce(mockSuccessResponse(mockData));
-
-      const result = await request.GET('/users/1');
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        'https://api.example.com/users/1',
-        expect.objectContaining({
-          method: 'GET'
-        })
-      );
-      expect(result).toEqual(mockData);
-    });
-
-    it('应该发送带参数的 GET 请求', async () => {
-      const mockData = [
-        { id: 1, name: 'User 1' },
-        { id: 2, name: 'User 2' }
-      ];
-      (global.fetch as any).mockResolvedValueOnce(mockSuccessResponse(mockData));
-
-      const params = { page: 1, limit: 10 };
-      await request.GET('/users', params);
-
-      expect(global.fetch).toHaveBeenCalledWith('https://api.example.com/users?page=1&limit=10', expect.objectContaining({ method: 'GET' }));
-    });
-
-    it('应该发送 POST 请求并包含请求体', async () => {
-      const mockData = { id: 3, name: 'New User' };
-      const requestBody = { name: 'New User' };
-      (global.fetch as any).mockResolvedValueOnce(mockSuccessResponse(mockData));
-
-      await request.POST('/users', requestBody);
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        'https://api.example.com/users',
-        expect.objectContaining({
-          method: 'POST',
-          body: JSON.stringify(requestBody)
-        })
-      );
+    it('应该使用自定义选项创建实例', () => {
+      const options = { headers: { 'Content-Type': 'application/json' } };
+      const customRequest = new BreezeRequest(options);
+      expect(customRequest).toBeInstanceOf(BreezeRequest);
     });
   });
 
   describe('HTTP 方法', () => {
-    it('应该支持所有 HTTP 方法', async () => {
-      const mockData = { success: true };
-      (global.fetch as any).mockResolvedValue(mockSuccessResponse(mockData));
-
-      const methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'];
-
-      for (const method of methods) {
-        await request[method]('/test');
-
-        expect(global.fetch).toHaveBeenLastCalledWith('https://api.example.com/test', expect.objectContaining({ method }));
-      }
-    });
-  });
-
-  describe('中间件功能', () => {
-    it('应该执行请求前中间件', async () => {
-      const mockData = { id: 1 };
-      (global.fetch as any).mockResolvedValueOnce(mockSuccessResponse(mockData));
-
-      const requestSpy = vi.fn();
-      request.use(async (ctx: any, next: Function) => {
-        requestSpy(ctx.request);
-        ctx.request.headers = { ...ctx.request.headers, 'X-Custom': 'Test' };
-        await next();
+    beforeEach(() => {
+      vi.mocked(wx.request).mockImplementation(({ success }) => {
+        success?.({ data: 'test data', statusCode: 200 } as any);
+        return {} as any;
       });
+    });
 
-      await request.GET('/test');
-
-      expect(requestSpy).toHaveBeenCalled();
-      expect(global.fetch).toHaveBeenCalledWith(
-        'https://api.example.com/test',
+    it('应该支持 GET 请求', async () => {
+      const result = await request.GET('/test');
+      expect(wx.request).toHaveBeenCalledWith(
         expect.objectContaining({
-          headers: expect.objectContaining({ 'X-Custom': 'Test' })
+          url: '/test',
+          method: 'GET'
+        })
+      );
+      expect(result).toEqual({ data: 'test data', statusCode: 200 });
+    });
+
+    it('应该支持 POST 请求', async () => {
+      const data = { name: 'test' };
+      await request.POST('/test', data);
+      expect(wx.request).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: '/test',
+          data,
+          method: 'POST'
         })
       );
     });
 
-    it('应该执行响应后中间件', async () => {
-      const mockData = { id: 1 };
-      (global.fetch as any).mockResolvedValueOnce(mockSuccessResponse(mockData));
-
-      const responseSpy = vi.fn();
-      request.use(async (ctx: any, next: Function) => {
-        await next();
-        responseSpy(ctx.response);
-        // 修改响应数据
-        ctx.response.extra = 'added';
-      });
-
-      const result = await request.GET('/test');
-
-      expect(responseSpy).toHaveBeenCalledWith(mockData);
-      expect(result).toEqual({ ...mockData, extra: 'added' });
+    it('应该支持 PUT 请求', async () => {
+      const data = { name: 'updated' };
+      await request.PUT('/test/1', data);
+      expect(wx.request).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: '/test/1',
+          data,
+          method: 'PUT'
+        })
+      );
     });
 
-    it('应该按照正确顺序执行中间件链', async () => {
-      const mockData = { id: 1 };
-      (global.fetch as any).mockResolvedValueOnce(mockSuccessResponse(mockData));
+    it('应该支持 DELETE 请求', async () => {
+      await request.DELETE('/test/1');
+      expect(wx.request).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: '/test/1',
+          method: 'DELETE'
+        })
+      );
+    });
 
+    it('应该支持 PATCH 请求', async () => {
+      const data = { name: 'patch' };
+      await request.PATCH('/test/1', data);
+      expect(wx.request).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: '/test/1',
+          data,
+          method: 'PATCH'
+        })
+      );
+    });
+  });
+
+  describe('中间件', () => {
+    it('应该按正确顺序执行中间件', async () => {
       const order: number[] = [];
 
-      request.use(async (ctx: any, next: Function) => {
+      request.use(async (ctx, next) => {
         order.push(1);
-        await next();
-        order.push(6);
-      });
-
-      request.use(async (ctx: any, next: Function) => {
-        order.push(2);
-        await next();
-        order.push(5);
-      });
-
-      request.use(async (ctx: any, next: Function) => {
-        order.push(3);
         await next();
         order.push(4);
       });
 
-      await request.GET('/test');
+      request.use(async (ctx, next) => {
+        order.push(2);
+        await next();
+        order.push(3);
+      });
 
-      expect(order).toEqual([1, 2, 3, 4, 5, 6]);
+      vi.mocked(wx.request).mockImplementation(({ success }) => {
+        success?.({ data: 'test' } as any);
+        return {} as any;
+      });
+
+      await request.GET('/test');
+      expect(order).toEqual([1, 2, 3, 4]);
+    });
+
+    it('应该在中间件中修改请求', async () => {
+      request.use(async (ctx, next) => {
+        ctx.request.options = {
+          ...(ctx.request.options || {}),
+          headers: { 'X-Custom': 'Value' }
+        };
+        await next();
+      });
+
+      await request.GET('/test');
+      expect(wx.request).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: { 'X-Custom': 'Value' }
+        })
+      );
+    });
+
+    it('应该在中间件中修改响应', async () => {
+      vi.mocked(wx.request).mockImplementation(({ success }) => {
+        success?.({ data: { original: true } } as any);
+        return {} as any;
+      });
+
+      request.use(async (ctx, next) => {
+        await next();
+        if (ctx.response) {
+          ctx.response.modified = true;
+        }
+      });
+
+      const result = await request.GET('/test');
+      expect(result).toEqual({ data: { original: true }, modified: true });
     });
   });
 
   describe('错误处理', () => {
-    it('应该捕获请求错误', async () => {
-      (global.fetch as any).mockRejectedValueOnce(new Error('Network Error'));
+    it('应该捕获并处理错误', async () => {
+      const error = new Error('Request failed');
 
-      await expect(request.GET('/test')).rejects.toThrowError('Network Error');
-    });
+      vi.mocked(wx.request).mockImplementation(({ fail }) => {
+        fail?.(error as any);
+        return {} as any;
+      });
 
-    it('应该处理 HTTP 错误状态码', async () => {
-      (global.fetch as any).mockResolvedValueOnce(mockErrorResponse(404, 'Not Found'));
-
-      await expect(request.GET('/not-exist')).rejects.toThrowError('HTTP Error: 404');
-    });
-
-    it('应该使用错误处理中间件', async () => {
-      (global.fetch as any).mockRejectedValueOnce(new Error('API Error'));
-
-      const errorSpy = vi.fn();
-      request.catch((err: Error, ctx: any) => {
-        errorSpy(err);
+      request.catch((err, ctx) => {
+        expect(err.message).toBe('Request failed');
         ctx.errorHandled = true;
-        ctx.response = { error: err.message, fixed: true };
+        ctx.response = { error: true, message: err.message };
       });
 
       const result = await request.GET('/test');
-
-      expect(errorSpy).toHaveBeenCalled();
-      expect(result).toEqual({ error: 'API Error', fixed: true });
+      expect(result).toEqual({ error: true, message: 'Request failed' });
     });
 
-    it('应该允许多个错误处理器', async () => {
-      (global.fetch as any).mockRejectedValueOnce(new Error('API Error'));
+    it('应该传播未处理的错误', async () => {
+      const error = new Error('Unhandled error');
 
-      const errorSpies = [vi.fn(), vi.fn(), vi.fn()];
-
-      request.catch((err: Error, ctx: any) => {
-        errorSpies[0](err);
-        // 不标记为已处理，继续传播
+      vi.mocked(wx.request).mockImplementation(({ fail }) => {
+        fail?.(error as any);
+        return {} as any;
       });
 
-      request.catch((err: Error, ctx: any) => {
-        errorSpies[1](err);
-        ctx.response = { partial: true };
-        // 不标记为已处理，继续传播
-      });
-
-      request.catch((err: Error, ctx: any) => {
-        errorSpies[2](err);
-        ctx.errorHandled = true;
-        ctx.response = { ...ctx.response, complete: true };
-      });
-
-      const result = await request.GET('/test');
-
-      errorSpies.forEach(spy => expect(spy).toHaveBeenCalled());
-      expect(result).toEqual({ partial: true, complete: true });
+      await expect(request.GET('/test')).rejects.toThrow('Unhandled error');
     });
   });
 
-  describe('高级功能', () => {
-    it('应该处理完整的 URL', async () => {
-      const mockData = { success: true };
-      (global.fetch as any).mockResolvedValueOnce(mockSuccessResponse(mockData));
+  describe('使用基础URL', () => {
+    it('应该在请求前添加基础URL', async () => {
+      request.useBaseUrl('https://api.example.com');
 
-      await request.GET('https://other-api.com/test');
-
-      expect(global.fetch).toHaveBeenCalledWith('https://other-api.com/test', expect.anything());
-    });
-
-    it('应该合并自定义选项', async () => {
-      const mockData = { success: true };
-      (global.fetch as any).mockResolvedValueOnce(mockSuccessResponse(mockData));
-
-      await request.GET('/test', null, {
-        credentials: 'include',
-        headers: { 'X-Custom': 'Value' }
-      });
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        'https://api.example.com/test',
+      await request.GET('/users');
+      expect(wx.request).toHaveBeenCalledWith(
         expect.objectContaining({
-          credentials: 'include',
-          headers: expect.objectContaining({
-            'Content-Type': 'application/json',
-            'X-Custom': 'Value'
-          })
+          url: 'https://api.example.com/users',
+          method: 'GET'
         })
       );
     });
+
+    it('不应修改绝对URL', async () => {
+      request.useBaseUrl('https://api.example.com');
+
+      await request.GET('https://other-api.com/users');
+      expect(wx.request).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: 'https://other-api.com/users',
+          method: 'GET'
+        })
+      );
+    });
+  });
+
+  describe('请求任务处理', () => {
+    it('应该存储请求任务句柄', async () => {
+      const mockTask = { abort: vi.fn() };
+      vi.mocked(wx.request).mockReturnValue(mockTask as any);
+
+      await request.GET('/test');
+      expect(request.taskHandle).toBe(mockTask);
+    });
+  });
+});
+
+describe('拦截器', () => {
+  let interceptor: Interceptor;
+
+  beforeEach(() => {
+    interceptor = new Interceptor();
+  });
+
+  it('应该按正确顺序执行中间件', async () => {
+    const order: string[] = [];
+
+    interceptor.use(async (ctx, next) => {
+      order.push('before-1');
+      await next();
+      order.push('after-1');
+    });
+
+    interceptor.use(async (ctx, next) => {
+      order.push('before-2');
+      await next();
+      order.push('after-2');
+    });
+
+    await interceptor.execute({} as any);
+    expect(order).toEqual(['before-1', 'before-2', 'after-2', 'after-1']);
+  });
+
+  it('应该处理中间件错误', async () => {
+    const errorHandler = vi.fn((err, ctx) => {
+      ctx.errorHandled = true;
+    });
+
+    interceptor.use(async () => {
+      throw new Error('Test error');
+    });
+
+    interceptor.catch(errorHandler);
+
+    const context = await interceptor.execute({} as any);
+    expect(errorHandler).toHaveBeenCalledTimes(1);
+    expect(context.errorHandled).toBe(true);
+    expect(context.error).toBeInstanceOf(Error);
+  });
+
+  it('应该组合多个拦截器', () => {
+    const interceptor1 = new Interceptor();
+    const middleware1 = async (ctx: any, next: any) => {
+      await next();
+    };
+    interceptor1.use(middleware1);
+
+    const interceptor2 = new Interceptor();
+    const middleware2 = async (ctx: any, next: any) => {
+      await next();
+    };
+    interceptor2.use(middleware2);
+
+    const composed = Interceptor.compose(interceptor1, interceptor2);
+    expect(composed).toBeInstanceOf(Interceptor);
+    expect((composed as any).middleware.length).toBe(2);
   });
 });

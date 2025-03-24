@@ -12,6 +12,9 @@ import type { BreezeRequestConfig } from './types';
  */
 export const defaultRequest = ({ url, data, options, method, getTaskHandle }: BreezeRequestConfig) => {
   return new Promise((resolve, reject) => {
+    if (!wx?.request) {
+      return reject(new Error('wx.request is not defined. Please check if you are in a WeChat Mini Program environment.'));
+    }
     const requestTask = wx.request({
       url,
       data,

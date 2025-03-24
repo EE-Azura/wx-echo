@@ -1,9 +1,9 @@
-import { Context, MiddlewareFunction, ErrorHandlerFunction } from './types';
+import { BreezeContext, BreezeMiddleware, BreezeErrorHandler } from './types';
 
 /**
  * 拦截器模块，灵感来自 Koa2 的中间件系统
  * 实现洋葱模型用于请求/响应处理
- * @module Interceptor
+ * @module Interceptor<T>
  */
 
 /**
@@ -11,48 +11,48 @@ import { Context, MiddlewareFunction, ErrorHandlerFunction } from './types';
  * @class Interceptor
  * @classdesc 提供中间件注册和执行功能的拦截器
  */
-export class Interceptor {
+export class Interceptor<TReq = unknown, TRes = unknown> {
   /**
    * 存储中间件函数的数组
    * @private
-   * @type {MiddlewareFunction[]}
+   * @type {BreezeMiddleware[]}
    */
-  private middleware: MiddlewareFunction[] = [];
+  private middleware: BreezeMiddleware<TReq, TRes>[] = [];
 
   /**
    * 存储错误处理中间件函数的数组
    * @private
-   * @type {ErrorHandlerFunction[]}
+   * @type {BreezeErrorHandler[]}
    */
-  private errorHandlers: ErrorHandlerFunction[] = [];
+  private errorHandlers: BreezeErrorHandler<TReq, TRes>[] = [];
 
   /**
    * 添加中间件到拦截器栈
-   * @param {MiddlewareFunction} fn - 中间件函数
-   * @returns {Interceptor} 返回拦截器实例，支持链式调用
+   * @param {BreezeMiddleware} fn - 中间件函数
+   * @returns {Interceptor<T>} 返回拦截器实例，支持链式调用
    */
-  use(fn: MiddlewareFunction): Interceptor {
+  use(fn: BreezeMiddleware<TReq, TRes>): Interceptor<TReq, TRes> {
     this.middleware.push(fn);
     return this;
   }
 
   /**
    * 添加错误处理中间件到拦截器栈
-   * @param {ErrorHandlerFunction} fn - 错误处理中间件函数
+   * @param {BreezeErrorHandler} fn - 错误处理中间件函数
    * @returns {Interceptor} 返回拦截器实例，支持链式调用
    */
-  catch(fn: ErrorHandlerFunction): Interceptor {
+  catch(fn: BreezeErrorHandler<TReq, TRes>): Interceptor<TReq, TRes> {
     this.errorHandlers.push(fn);
     return this;
   }
 
   /**
    * 执行中间件栈
-   * @param {Context} [context={}] - 初始上下文对象
-   * @returns {Promise<Context>} 返回处理后的上下文对象
+   * @param {BreezeContext} - 初始上下文对象
+   * @returns {Promise<BreezeContext>} 返回处理后的上下文对象
    * @throws {Error} 当多次调用 next() 时抛出错误
    */
-  async execute(context: Context = {}): Promise<Context> {
+  async execute(context: BreezeContext<TReq, TRes>): Promise<BreezeContext<TReq, TRes>> {
     let index = -1;
 
     /**
@@ -92,10 +92,10 @@ export class Interceptor {
    * 处理执行过程中的错误
    * @private
    * @param {unknown} err - 捕获到的错误
-   * @param {Context} context - 上下文对象
+   * @param {BreezeContext} context - 上下文对象
    * @returns {Promise<void>}
    */
-  private async handleError(err: unknown, context: Context): Promise<void> {
+  private async handleError(err: unknown, context: BreezeContext<TReq, TRes>): Promise<void> {
     // 在上下文中存储错误信息
     context.error = err;
 
