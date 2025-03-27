@@ -3,19 +3,6 @@ import { Interceptor } from './Interceptor';
 import type { BreezeRequestOptions, BreezeMiddleware, BreezeErrorHandler, BreezeRequestConfig, BreezeRequestCustom, BreezeContext, BreezeNext } from './types';
 
 /**
- * 支持的 HTTP 方法
- */
-const methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'] as const;
-type HttpMethod = (typeof methods)[number];
-
-/**
- * 请求方法接口，用于 Proxy 的返回类型
- */
-interface RequestMethods<TRes = unknown> {
-  [key: string]: <R = TRes>(url: string, data?: unknown, options?: BreezeRequestOptions) => Promise<R>;
-}
-
-/**
  * BreezeRequest 类，提供 HTTP 请求方法和中间件支持
  * @class BreezeRequest
  */
@@ -39,12 +26,6 @@ export class BreezeRequest<TRes> {
   #request: BreezeRequestCustom;
 
   /**
-   * 请求方法代理
-   * @private
-   */
-  #proxy: BreezeRequest<TRes> & RequestMethods;
-
-  /**
    * 请求任务句柄
    */
   taskHandle: unknown | null = null;
@@ -58,28 +39,6 @@ export class BreezeRequest<TRes> {
     this.#interceptor = new Interceptor();
     this.#defaultOptions = options;
     this.#request = requestCustom as BreezeRequestCustom;
-
-    // 创建代理对象
-    this.#proxy = new Proxy(this as unknown as BreezeRequest<TRes> & RequestMethods, {
-      get: (target: BreezeRequest<TRes> & RequestMethods, prop: string | symbol) => {
-        if (prop in target) {
-          return Reflect.get(target, prop);
-        }
-
-        // 如果是 HTTP 方法，创建对应的请求函数
-        const httpMethod = prop.toString().toUpperCase();
-        if (methods.includes(httpMethod as HttpMethod)) {
-          return <R = TRes>(url: string, data?: unknown, options?: BreezeRequestOptions): Promise<R> => {
-            return this.request<R>(url, data, { ...this.#defaultOptions, ...options, method: httpMethod });
-          };
-        }
-
-        return undefined;
-      }
-    });
-
-    // 返回代理对象
-    return this.#proxy as unknown as BreezeInstance<TRes>;
   }
 
   /**
@@ -104,13 +63,11 @@ export class BreezeRequest<TRes> {
       response: undefined
     };
 
-    this.use(async (ctx: BreezeContext<unknown, TRes>, next: BreezeNext) => {
-      await next();
-      ctx.response = (await this.#request(ctx.request as BreezeRequestConfig)) as TRes;
-    });
-
     // 执行拦截器
-    await this.#interceptor.execute(context);
+    await this.#interceptor.execute(context, async (ctx: BreezeContext<unknown, TRes>, next: BreezeNext) => {
+      await next();
+      ctx.response = (await this.#request(ctx.request as BreezeRequestConfig)) as TRes & Record<string, unknown>;
+    });
 
     return context.response as T;
   }
@@ -120,9 +77,9 @@ export class BreezeRequest<TRes> {
    * @param {BreezeMiddleware} fn - 中间件函数
    * @returns {BreezeInstance} 返回当前实例，支持链式调用
    */
-  use(fn: BreezeMiddleware<unknown, TRes>): BreezeInstance<TRes> {
+  use(fn: BreezeMiddleware<unknown, TRes>): BreezeRequest<TRes> {
     this.#interceptor.use(fn);
-    return this.#proxy as unknown as BreezeInstance<TRes>;
+    return this;
   }
 
   /**
@@ -130,16 +87,16 @@ export class BreezeRequest<TRes> {
    * @param {BreezeErrorHandler} fn - 错误处理中间件函数
    * @returns {BreezeInstance} 返回当前实例，支持链式调用
    */
-  catch(fn: BreezeErrorHandler<unknown, TRes>): BreezeInstance<TRes> {
+  catch(fn: BreezeErrorHandler<unknown, TRes>): BreezeRequest<TRes> {
     this.#interceptor.catch(fn);
-    return this.#proxy as unknown as BreezeInstance<TRes>;
+    return this;
   }
 
   /**
    * 添加 baseURL 中间件
    * @param {string} baseUrl - 基础 URL
    */
-  useBaseUrl(baseUrl: string): BreezeInstance<TRes> {
+  useBaseUrl(baseUrl: string): BreezeRequest<TRes> {
     // 创建一个 baseURL 中间件
     const baseURLMiddleware = (baseURL: string) => {
       return async (ctx: BreezeContext<unknown, TRes>, next: BreezeNext) => {
@@ -151,15 +108,33 @@ export class BreezeRequest<TRes> {
     };
     return this.use(baseURLMiddleware(baseUrl));
   }
-}
 
-// 定义 BreezeRequest 实例类型，包含原始类方法和 HTTP 方法
-export type BreezeInstance<T = unknown> = BreezeRequest<T> & {
-  GET: <R = T>(url: string, params?: unknown, options?: BreezeRequestOptions) => Promise<R>;
-  POST: <R = T>(url: string, data?: unknown, options?: BreezeRequestOptions) => Promise<R>;
-  PUT: <R = T>(url: string, data?: unknown, options?: BreezeRequestOptions) => Promise<R>;
-  DELETE: <R = T>(url: string, params?: unknown, options?: BreezeRequestOptions) => Promise<R>;
-  PATCH: <R = T>(url: string, data?: unknown, options?: BreezeRequestOptions) => Promise<R>;
-  HEAD: <R = T>(url: string, params?: unknown, options?: BreezeRequestOptions) => Promise<R>;
-  OPTIONS: <R = T>(url: string, params?: unknown, options?: BreezeRequestOptions) => Promise<R>;
-};
+  // http 方法
+  GET<R = TRes>(url: string, params?: unknown, options?: BreezeRequestOptions): Promise<R> {
+    return this.request(url, params, { ...this.#defaultOptions, ...options, method: 'GET' });
+  }
+
+  POST<R = TRes>(url: string, data?: unknown, options?: BreezeRequestOptions): Promise<R> {
+    return this.request(url, data, { ...this.#defaultOptions, ...options, method: 'POST' });
+  }
+
+  PUT<R = TRes>(url: string, params?: unknown, options?: BreezeRequestOptions): Promise<R> {
+    return this.request(url, params, { ...this.#defaultOptions, ...options, method: 'PUT' });
+  }
+
+  DELETE<R = TRes>(url: string, data?: unknown, options?: BreezeRequestOptions): Promise<R> {
+    return this.request(url, data, { ...this.#defaultOptions, ...options, method: 'DELETE' });
+  }
+
+  PATCH<R = TRes>(url: string, params?: unknown, options?: BreezeRequestOptions): Promise<R> {
+    return this.request(url, params, { ...this.#defaultOptions, ...options, method: 'PATCH' });
+  }
+
+  HEAD<R = TRes>(url: string, data?: unknown, options?: BreezeRequestOptions): Promise<R> {
+    return this.request(url, data, { ...this.#defaultOptions, ...options, method: 'HEAD' });
+  }
+
+  OPTIONS<R = TRes>(url: string, data?: unknown, options?: BreezeRequestOptions): Promise<R> {
+    return this.request(url, data, { ...this.#defaultOptions, ...options, method: 'OPTIONS' });
+  }
+}

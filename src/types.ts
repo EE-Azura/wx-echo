@@ -9,7 +9,7 @@ export interface BreezeContext<TReq = unknown, TRes = unknown> {
    * 响应相关数据
    * @type {unknown}
    */
-  response?: TRes;
+  response?: TRes & Record<string, unknown>;
 
   /**
    * 错误信息

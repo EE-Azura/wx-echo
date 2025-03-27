@@ -49,12 +49,13 @@ export class Interceptor<TReq = unknown, TRes = unknown> {
   /**
    * 执行中间件栈
    * @param {BreezeContext} - 初始上下文对象
+   * @param {Function} coreMiddleware - 核心中间件函数
    * @returns {Promise<BreezeContext>} 返回处理后的上下文对象
    * @throws {Error} 当多次调用 next() 时抛出错误
    */
-  async execute(context: BreezeContext<TReq, TRes>): Promise<BreezeContext<TReq, TRes>> {
+  async execute(context: BreezeContext<TReq, TRes>, coreMiddleware: BreezeMiddleware<TReq, TRes>): Promise<BreezeContext<TReq, TRes>> {
+    const _middlewares = [...this.middleware, coreMiddleware] as BreezeMiddleware<TReq, TRes>[];
     let index = -1;
-
     /**
      * 递归调度函数，用于执行中间件
      * @param {number} i - 当前中间件索引
@@ -68,7 +69,7 @@ export class Interceptor<TReq = unknown, TRes = unknown> {
 
       index = i;
 
-      const fn = this.middleware[i];
+      const fn = _middlewares[i];
 
       if (!fn) return;
 
