@@ -7,9 +7,9 @@ export interface BreezeContext<TReq = unknown, TRes = unknown> {
 
   /**
    * 响应相关数据
-   * @type {unknown}
+   * @type {TRes | undefined} // 修改此类型
    */
-  response?: TRes & Record<string, unknown>;
+  response?: TRes;
 
   /**
    * 错误信息
@@ -34,7 +34,7 @@ export type BreezeNext = () => Promise<void>;
 
 export type BreezeMiddleware<TReq = unknown, TRes = unknown> = (ctx: BreezeContext<TReq, TRes>, next: BreezeNext) => Promise<void> | void;
 
-export type BreezeErrorHandler<TReq = unknown, TRes = unknown> = (err: Error, ctx: BreezeContext<TReq, TRes>) => Promise<void> | void;
+export type BreezeErrorHandler<TReq = unknown, TRes = unknown> = (err: unknown, ctx: BreezeContext<TReq, TRes>) => Promise<void> | void;
 
 export interface BreezeRequestOptions {
   /**
@@ -51,10 +51,10 @@ export interface BreezeRequestOptions {
 
   /**
    * 请求方法
-   * @type {string}
+   * @type {HttpMethod}
    * @default 'GET'
    */
-  method?: string;
+  method?: HttpMethod;
 
   /**
    * 响应类型
@@ -96,3 +96,5 @@ export interface BreezeRequestConfig<T = unknown> {
 }
 
 export type BreezeRequestCustom<TReq = unknown, TRes = unknown> = (params: BreezeRequestConfig<TReq>) => Promise<TRes>;
+
+export type HttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE' | 'CONNECT' | 'OPTIONS' | 'TRACE' | 'PATCH';

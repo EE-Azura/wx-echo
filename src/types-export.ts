@@ -9,11 +9,6 @@ export type {
   BreezeErrorHandler,
   BreezeRequestOptions,
   BreezeRequestConfig,
-  BreezeRequestCustom
+  BreezeRequestCustom,
+  HttpMethod
 } from './types';
-
-// Instance types from breeze-request
-export type { BreezeInstance } from './breeze-request';
-
-// Re-export methods type
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';

@@ -3,16 +3,30 @@ import { BreezeRequest } from '../src/breeze-request';
 import { Interceptor } from '../src/Interceptor';
 import { BreezeContext, BreezeNext } from '../src/types';
 
-// 为微信小程序环境模拟 wx 全局对象
-global.wx = {
+// Assign the mock function using a type assertion on globalThis to satisfy TypeScript
+// We are intentionally overriding the standard wx.request with a Vitest mock
+// Use type assertion '(globalThis as any)' to bypass the check on globalThis
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(globalThis as any).wx = {
   request: vi.fn()
-} as unknown;
+};
+
+// 创建一个符合 RequestTask 接口基本结构的模拟对象
+const createMockRequestTask = (): WechatMiniprogram.RequestTask => ({
+  abort: vi.fn(),
+  offHeadersReceived: vi.fn(),
+  onHeadersReceived: vi.fn()
+  // 如果接口需要更多属性，可以在这里添加
+});
 
 describe('BreezeRequest', () => {
   let request: BreezeRequest<unknown>;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Ensure wx.request is correctly typed for mocking within tests
+    // Use vi.mocked to work with the mocked function, now referencing wx.request directly
+    vi.mocked(wx.request).mockClear(); // Reference wx.request directly
     request = new BreezeRequest();
   });
 
@@ -30,27 +44,34 @@ describe('BreezeRequest', () => {
 
   describe('HTTP 方法', () => {
     beforeEach(() => {
+      // Use vi.mocked to interact with the mocked wx.request
       vi.mocked(wx.request).mockImplementation(({ success }) => {
-        success?.({ data: 'test data', statusCode: 200 } as object);
-        return {} as object;
+        // Reference wx.request directly
+        // 提供符合 WechatMiniprogram.RequestSuccessCallbackResult 结构的对象
+        success?.({ data: 'test data', statusCode: 200, header: {} } as WechatMiniprogram.RequestSuccessCallbackResult<string>);
+        // 返回更完整的模拟 RequestTask
+        return createMockRequestTask();
       });
     });
 
     it('应该支持 GET 请求', async () => {
       const result = await request.GET('/test');
       expect(wx.request).toHaveBeenCalledWith(
+        // Reference wx.request directly
         expect.objectContaining({
           url: '/test',
           method: 'GET'
         })
       );
-      expect(result).toEqual({ data: 'test data', statusCode: 200 });
+      // 调整期望值以匹配模拟的完整响应结构
+      expect(result).toEqual({ data: 'test data', statusCode: 200, header: {} });
     });
 
     it('应该支持 POST 请求', async () => {
       const data = { name: 'test' };
       await request.POST('/test', data);
       expect(wx.request).toHaveBeenCalledWith(
+        // Reference wx.request directly
         expect.objectContaining({
           url: '/test',
           data,
@@ -63,6 +84,7 @@ describe('BreezeRequest', () => {
       const data = { name: 'updated' };
       await request.PUT('/test/1', data);
       expect(wx.request).toHaveBeenCalledWith(
+        // Reference wx.request directly
         expect.objectContaining({
           url: '/test/1',
           data,
@@ -74,6 +96,7 @@ describe('BreezeRequest', () => {
     it('应该支持 DELETE 请求', async () => {
       await request.DELETE('/test/1');
       expect(wx.request).toHaveBeenCalledWith(
+        // Reference wx.request directly
         expect.objectContaining({
           url: '/test/1',
           method: 'DELETE'
@@ -85,6 +108,7 @@ describe('BreezeRequest', () => {
       const data = { name: 'patch' };
       await request.PATCH('/test/1', data);
       expect(wx.request).toHaveBeenCalledWith(
+        // Reference wx.request directly
         expect.objectContaining({
           url: '/test/1',
           data,
@@ -111,8 +135,11 @@ describe('BreezeRequest', () => {
       });
 
       vi.mocked(wx.request).mockImplementation(({ success }) => {
-        success?.({ data: 'test' } as object);
-        return {} as object;
+        // Reference wx.request directly
+        // 使用更具体的类型或结构
+        success?.({ data: 'test', statusCode: 200, header: {} } as WechatMiniprogram.RequestSuccessCallbackResult<string>);
+        // 返回更完整的模拟 RequestTask
+        return createMockRequestTask();
       });
 
       await request.GET('/test');
@@ -130,6 +157,7 @@ describe('BreezeRequest', () => {
 
       await request.GET('/test');
       expect(wx.request).toHaveBeenCalledWith(
+        // Reference wx.request directly
         expect.objectContaining({
           headers: { 'X-Custom': 'Value' }
         })
@@ -137,19 +165,31 @@ describe('BreezeRequest', () => {
     });
 
     it('应该在中间件中修改响应', async () => {
+      // 为此测试创建一个具有特定 TRes 类型的实例
+      // TRes 定义为可以包含 data 和可选的 modified 属性的对象
+      type TestResponseType = { data?: { original: boolean }; modified?: boolean };
+      const specificRequest = new BreezeRequest<unknown, TestResponseType>();
+
       vi.mocked(wx.request).mockImplementation(({ success }) => {
-        success?.({ data: { original: true } } as object);
-        return {} as object;
+        // Reference wx.request directly
+        // 模拟返回的数据结构，类型已在上次编辑中修正
+        success?.({ data: { original: true }, statusCode: 200, header: {} } as WechatMiniprogram.RequestSuccessCallbackResult<{ original: boolean }>);
+        // 返回更完整的模拟 RequestTask
+        return createMockRequestTask();
       });
 
-      request.use(async (ctx, next) => {
+      specificRequest.use(async (ctx, next) => {
         await next();
+        // ctx.response 的类型现在是 TestResponseType | undefined
         if (ctx.response) {
+          // 可以安全地分配给 TRes 中定义的属性
           ctx.response.modified = true;
         }
       });
 
-      const result = await request.GET('/test');
+      // 使用新的实例发起请求
+      const result = await specificRequest.GET('/test');
+      // 预期结果包含原始数据和添加的属性
       expect(result).toEqual({ data: { original: true }, modified: true });
     });
   });
@@ -159,14 +199,24 @@ describe('BreezeRequest', () => {
       const error = new Error('Request failed');
 
       vi.mocked(wx.request).mockImplementation(({ fail }) => {
-        fail?.(error as Error);
-        return {} as object;
+        // Reference wx.request directly
+        fail?.({ errMsg: error.message } as WechatMiniprogram.GeneralCallbackResult);
+        return createMockRequestTask();
       });
 
-      request.catch((err, ctx) => {
-        expect(err.message).toBe('Request failed');
+      // 将 err 类型改为 unknown
+      request.catch((err: unknown, ctx) => {
+        // 添加类型检查以安全访问 errMsg
+        let message = 'Unknown error';
+        if (typeof err === 'object' && err !== null && 'errMsg' in err && typeof err.errMsg === 'string') {
+          message = err.errMsg;
+        } else if (err instanceof Error) {
+          message = err.message; // 也可处理 Error 实例
+        }
+        expect(message).toBe('Request failed');
         ctx.errorHandled = true;
-        ctx.response = { error: true, message: err.message };
+        // 响应类型应与 TRes (unknown) 兼容
+        ctx.response = { error: true, message: message };
       });
 
       const result = await request.GET('/test');
@@ -177,19 +227,25 @@ describe('BreezeRequest', () => {
       const error = new Error('Unhandled error');
 
       vi.mocked(wx.request).mockImplementation(({ fail }) => {
-        fail?.(error as Error);
-        return {} as object;
+        // Reference wx.request directly
+        fail?.({ errMsg: error.message } as WechatMiniprogram.GeneralCallbackResult);
+        // 返回更完整的模拟 RequestTask
+        return createMockRequestTask();
       });
 
-      await expect(request.GET('/test')).rejects.toThrow('Unhandled error');
+      // 预期捕获到的错误对象现在是 GeneralCallbackResult
+      await expect(request.GET('/test')).rejects.toEqual({ errMsg: 'Unhandled error' });
     });
   });
 
   describe('使用基础URL', () => {
     beforeEach(() => {
       vi.mocked(wx.request).mockImplementation(({ success }) => {
-        success?.({ data: 'test data', statusCode: 200 } as object);
-        return {} as object;
+        // Reference wx.request directly
+        // 使用更具体的类型或结构
+        success?.({ data: 'test data', statusCode: 200, header: {} } as WechatMiniprogram.RequestSuccessCallbackResult<string>);
+        // 返回更完整的模拟 RequestTask
+        return createMockRequestTask();
       });
     });
 
@@ -197,6 +253,7 @@ describe('BreezeRequest', () => {
       request.useBaseUrl('https://api.example.com');
       await request.GET('/users');
       expect(wx.request).toHaveBeenCalledWith(
+        // Reference wx.request directly
         expect.objectContaining({
           url: 'https://api.example.com/users',
           method: 'GET'
@@ -209,6 +266,7 @@ describe('BreezeRequest', () => {
 
       await request.GET('https://other-api.com/users');
       expect(wx.request).toHaveBeenCalledWith(
+        // Reference wx.request directly
         expect.objectContaining({
           url: 'https://other-api.com/users',
           method: 'GET'
@@ -223,11 +281,13 @@ describe('BreezeRequest', () => {
     });
 
     it('应该存储请求任务句柄', async () => {
-      const mockTask = { abort: vi.fn() };
-      // 同时设置返回值和成功回调
+      const mockTask = createMockRequestTask(); // 使用辅助函数创建
       vi.mocked(wx.request).mockImplementation(({ success }) => {
-        success?.({ data: 'test data', statusCode: 200 } as object);
-        return mockTask as object;
+        // Reference wx.request directly
+        // 使用更具体的类型或结构
+        success?.({ data: 'test data', statusCode: 200, header: {} } as WechatMiniprogram.RequestSuccessCallbackResult<string>);
+        // 返回具体的模拟任务对象
+        return mockTask; // 无需断言，类型已匹配
       });
 
       await request.GET('/test');
