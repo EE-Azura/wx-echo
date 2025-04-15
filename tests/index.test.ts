@@ -1,12 +1,13 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BreezeRequest } from '../src/breeze-request';
 import { Interceptor } from '../src/Interceptor';
-import { BreezeContext, BreezeNext } from '../src/types';
+import { BreezeContext, BreezeNext, BreezeRequestCustom } from '../src/types';
 
 // Assign the mock function using a type assertion on globalThis to satisfy TypeScript
 // We are intentionally overriding the standard wx.request with a Vitest mock
 // Use type assertion '(globalThis as any)' to bypass the check on globalThis
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 (globalThis as any).wx = {
   request: vi.fn()
 };
@@ -116,6 +117,48 @@ describe('BreezeRequest', () => {
         })
       );
     });
+
+    it('应该正确合并和传递请求选项', async () => {
+      const instanceOptions = { headers: { 'X-Instance': 'InstValue' } };
+      const methodOptions = { headers: { 'X-Method': 'MethValue' }, dataType: 'json' as const }; // 添加 as const
+      const requestWithOptions = new BreezeRequest(instanceOptions);
+
+      await requestWithOptions.GET('/test', undefined, methodOptions); // 传递 methodOptions
+
+      expect(wx.request).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: '/test',
+          method: 'GET',
+          headers: {
+            'X-Instance': 'InstValue',
+            'X-Method': 'MethValue'
+          },
+          dataType: 'json'
+        })
+      );
+    });
+
+    // 新增 HEAD 测试
+    it('应该支持 HEAD 请求', async () => {
+      await request.HEAD('/test');
+      expect(wx.request).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: '/test',
+          method: 'HEAD'
+        })
+      );
+    });
+
+    // 新增 OPTIONS 测试
+    it('应该支持 OPTIONS 请求', async () => {
+      await request.OPTIONS('/test');
+      expect(wx.request).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: '/test',
+          method: 'OPTIONS'
+        })
+      );
+    });
   });
 
   describe('中间件', () => {
@@ -190,7 +233,54 @@ describe('BreezeRequest', () => {
       // 使用新的实例发起请求
       const result = await specificRequest.GET('/test');
       // 预期结果包含原始数据和添加的属性
-      expect(result).toEqual({ data: { original: true }, modified: true });
+      expect(result).toEqual({ data: { original: true }, statusCode: 200, header: {}, modified: true });
+    });
+
+    // 新增：中间件短路测试
+    it('应该允许中间件短路请求', async () => {
+      request.use(async ctx => {
+        // 不调用 next()
+        ctx.response = { data: 'short-circuited', statusCode: 418, header: {} }; // 设置响应
+      });
+
+      request.use(async () => {
+        // 这个中间件不应该被执行
+        throw new Error('This middleware should not be called');
+      });
+
+      // wx.request 也不应该被调用
+      vi.mocked(wx.request).mockImplementation(() => {
+        throw new Error('wx.request should not be called');
+      });
+
+      const result = await request.GET('/test');
+      expect(result).toEqual({ data: 'short-circuited', statusCode: 418, header: {} });
+      expect(wx.request).not.toHaveBeenCalled();
+    });
+
+    // 新增：next() 后抛出错误测试
+    it('应该捕获在 next() 后抛出的中间件错误', async () => {
+      const error = new Error('Error after next');
+      request.use(async (ctx, next) => {
+        await next();
+        // 在 next() 返回后抛出错误
+        throw error;
+      });
+
+      request.catch((err, ctx) => {
+        expect(err).toBe(error);
+        ctx.errorHandled = true;
+        ctx.response = { error: true, message: 'Caught error after next' };
+      });
+
+      // 模拟底层请求成功
+      vi.mocked(wx.request).mockImplementation(({ success }) => {
+        success?.({ data: 'original data', statusCode: 200, header: {} } as WechatMiniprogram.RequestSuccessCallbackResult<string>);
+        return createMockRequestTask();
+      });
+
+      const result = await request.GET('/test');
+      expect(result).toEqual({ error: true, message: 'Caught error after next' });
     });
   });
 
@@ -236,6 +326,61 @@ describe('BreezeRequest', () => {
       // 预期捕获到的错误对象现在是 GeneralCallbackResult
       await expect(request.GET('/test')).rejects.toEqual({ errMsg: 'Unhandled error' });
     });
+
+    it('应该处理请求超时错误', async () => {
+      const error = { errMsg: 'request:fail timeout' }; // 模拟超时错误信息
+
+      vi.mocked(wx.request).mockImplementation(({ fail }) => {
+        fail?.(error as WechatMiniprogram.GeneralCallbackResult); // 强制类型转换
+        return createMockRequestTask();
+      });
+
+      request.catch((err: unknown, ctx) => {
+        expect(err).toEqual(error);
+        ctx.errorHandled = true;
+        ctx.response = { error: true, message: 'Request timed out' };
+      });
+
+      const result = await request.GET('/test');
+      expect(result).toEqual({ error: true, message: 'Request timed out' });
+    });
+
+    // 新增：wx.request 不存在测试
+    it('当 wx.request 不存在时应拒绝', async () => {
+      const originalWx = (globalThis as any).wx; // 保存原始 wx 对象
+      (globalThis as any).wx = undefined; // 模拟 wx 不存在
+
+      const specificRequest = new BreezeRequest(); // 创建新实例以使用当前的 wx 状态
+
+      await expect(specificRequest.GET('/test')).rejects.toThrow('wx.request is not defined. Please check if you are in a WeChat Mini Program environment.');
+
+      (globalThis as any).wx = originalWx; // 恢复 wx 对象
+    });
+  });
+
+  // 新增：自定义请求函数测试
+  describe('自定义请求函数', () => {
+    it('应该使用提供的自定义请求函数', async () => {
+      const customRequestFn = vi.fn().mockResolvedValue({ data: 'custom response', statusCode: 201, header: { 'X-Custom': 'true' } });
+      const customRequestInstance = new BreezeRequest({}, customRequestFn as BreezeRequestCustom<unknown, unknown>);
+
+      const result = await customRequestInstance.GET('/custom-test');
+
+      expect(customRequestFn).toHaveBeenCalledTimes(1);
+      // 调整断言以匹配 BreezeRequestConfig 结构
+      expect(customRequestFn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: '/custom-test',
+          // method 在 options 内部
+          options: expect.objectContaining({
+            method: 'GET'
+          })
+        })
+      );
+      expect(result).toEqual({ data: 'custom response', statusCode: 201, header: { 'X-Custom': 'true' } });
+      // 确保原始 wx.request 未被调用
+      expect(wx.request).not.toHaveBeenCalled();
+    });
   });
 
   describe('使用基础URL', () => {
@@ -280,18 +425,67 @@ describe('BreezeRequest', () => {
       vi.clearAllMocks();
     });
 
-    it('应该存储请求任务句柄', async () => {
-      const mockTask = createMockRequestTask(); // 使用辅助函数创建
-      vi.mocked(wx.request).mockImplementation(({ success }) => {
-        // Reference wx.request directly
-        // 使用更具体的类型或结构
-        success?.({ data: 'test data', statusCode: 200, header: {} } as WechatMiniprogram.RequestSuccessCallbackResult<string>);
-        // 返回具体的模拟任务对象
-        return mockTask; // 无需断言，类型已匹配
+    // 修改测试用例以反映异步获取 task
+    it('应该能通过 getTask() 异步获取任务句柄', async () => {
+      const mockTask = createMockRequestTask();
+      // 模拟 wx.request 在被调用时，通过 setTask 回调传递 task
+      // 注意：这里的 mock 模拟的是 defaultRequest 的行为，它会调用 setTask
+      // wx.request 本身不接收 setTask
+      vi.mocked(wx.request).mockImplementation(options => {
+        // 模拟 defaultRequest 调用 setTask 的行为
+        // 实际调用发生在 defaultRequest 内部，这里我们在测试中模拟这个效果
+        // 需要找到传递给 BreezeRequest 的 setTask 回调，但这比较困难直接模拟
+        // 因此，我们假设 BreezeRequest 正确传递了 setTask 给 defaultRequest
+        // defaultRequest 会调用它。BreezeRequest 内部的 taskResolver 会被触发。
+
+        // 模拟请求成功
+        options.success?.({ data: 'test data', statusCode: 200, header: {} } as WechatMiniprogram.RequestSuccessCallbackResult<string>);
+        return mockTask; // wx.request 返回 task
       });
 
-      await request.GET('/test');
-      expect(request.taskHandle).toBe(mockTask);
+      const requestHandle = request.GET('/test');
+      // 异步获取 task
+      const task = await requestHandle.getTask();
+      // 断言获取到的 task 是我们模拟的 task
+      expect(task).toBe(mockTask);
+      // 等待请求完成
+      await requestHandle;
+    });
+
+    it('应该能够中止请求', async () => {
+      const mockTask = createMockRequestTask();
+      let failCallback: ((res: WechatMiniprogram.GeneralCallbackResult) => void) | undefined;
+
+      // 模拟 wx.request，捕获 fail 回调，并返回 mockTask
+      vi.mocked(wx.request).mockImplementation(options => {
+        failCallback = options.fail; // 捕获 fail 回调
+        // 注意：这里不调用 success 或 fail，模拟一个进行中的请求
+        // 同样假设 setTask 被 defaultRequest 正确调用
+        return mockTask;
+      });
+
+      // 模拟 abort() 调用时触发 fail 回调
+      vi.mocked(mockTask.abort).mockImplementation(() => {
+        failCallback?.({ errMsg: 'request:fail abort' });
+      });
+
+      // 发起请求但不等待完成
+      const requestHandle = request.GET('/test');
+
+      // 异步获取 task
+      const task = await requestHandle.getTask();
+
+      // 确保获取到的是正确的 task
+      expect(task).toBe(mockTask);
+
+      // 调用中止方法 - 使用非空断言操作符
+      task!.abort();
+
+      // 验证模拟任务的 abort 方法是否被调用
+      expect(mockTask.abort).toHaveBeenCalledTimes(1);
+
+      // 断言主 Promise 因中止而被拒绝
+      await expect(requestHandle).rejects.toEqual({ errMsg: 'request:fail abort' });
     });
   });
 });
