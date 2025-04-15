@@ -1,17 +1,17 @@
 {
-  "name": "breeze-request",
+  "name": "wx-echo",
   "version": "0.1.0",
   "description": "",
   "type": "module",
-  "main": "dist/breeze-request.js",
-  "commonjs": "dist/breeze-request.cjs",
-  "module": "./dist/breeze-request.js",
-  "types": "./dist/breeze-request.d.ts",
+  "main": "dist/wx-echo.js",
+  "commonjs": "dist/wx-echo.cjs",
+  "module": "./dist/wx-echo.js",
+  "types": "./dist/wx-echo.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/breeze-request.js",
-      "require": "./dist/breeze-request.cjs",
-      "types": "./dist/breeze-request.d.ts"
+      "import": "./dist/wx-echo.js",
+      "require": "./dist/wx-echo.cjs",
+      "types": "./dist/wx-echo.d.ts"
     },
     "./types": {
       "types": "./dist/types.d.ts"
@@ -34,31 +34,19 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/EE-Azura/breeze-request.git"
+    "url": "git+https://github.com/EE-Azura/wx-echo.git"
   },
   "keywords": [
     "nodejs",
     "javascript",
-    "typescript",
-    "queue",
-    "priority-queue",
-    "task-scheduler",
-    "async",
-    "concurrency",
-    "concurrency-control",
-    "throttle",
-    "rate-limiting",
-    "task-manager",
-    "promise",
-    "event-driven",
-    "multi-priority"
+    "typescript"
   ],
   "author": "EE_Azura",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/EE-Azura/breeze-request/issues"
+    "url": "https://github.com/EE-Azura/wx-echo/issues"
   },
-  "homepage": "https://github.com/EE-Azura/breeze-request#readme",
+  "homepage": "https://github.com/EE-Azura/wx-echo#readme",
   "devDependencies": {
     "@eslint/js": "^9.21.0",
     "@types/node": "^22.13.9",

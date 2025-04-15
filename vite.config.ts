@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config';
 import { resolve } from 'path';
 import dts from 'vite-plugin-dts';
 
-const packageName = 'breeze-request';
+const packageName = 'wx-echo';
 
 export default defineConfig({
   build: {

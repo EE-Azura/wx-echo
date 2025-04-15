@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { BreezeRequest } from '../src/breeze-request';
-import { BreezeRequestCustom } from '../src/types';
+import { Echo } from '../src/wx-echo'; // Renamed from BreezeRequest
+import { EchoRequestCustom } from '../src/types'; // Renamed from BreezeRequestCustom
 
 // Assign the mock function using a type assertion on globalThis to satisfy TypeScript
 // We are intentionally overriding the standard wx.request with a Vitest mock
@@ -19,26 +19,27 @@ const createMockRequestTask = (): WechatMiniprogram.RequestTask => ({
   // 如果接口需要更多属性，可以在这里添加
 });
 
-describe('BreezeRequest', () => {
-  let request: BreezeRequest<unknown>;
+describe('Echo', () => {
+  // Renamed from BreezeRequest
+  let request: Echo<unknown>; // Renamed from BreezeRequest
 
   beforeEach(() => {
     vi.clearAllMocks();
     // Ensure wx.request is correctly typed for mocking within tests
     // Use vi.mocked to work with the mocked function, now referencing wx.request directly
     vi.mocked(wx.request).mockClear(); // Reference wx.request directly
-    request = new BreezeRequest();
+    request = new Echo(); // Renamed from BreezeRequest
   });
 
   describe('构造函数', () => {
     it('应该使用默认选项创建实例', () => {
-      expect(request).toBeInstanceOf(BreezeRequest);
+      expect(request).toBeInstanceOf(Echo); // Renamed from BreezeRequest
     });
 
     it('应该使用自定义选项创建实例', () => {
       const options = { headers: { 'Content-Type': 'application/json' } };
-      const customRequest = new BreezeRequest(options);
-      expect(customRequest).toBeInstanceOf(BreezeRequest);
+      const customRequest = new Echo(options); // Renamed from BreezeRequest
+      expect(customRequest).toBeInstanceOf(Echo); // Renamed from BreezeRequest
     });
   });
 
@@ -120,7 +121,7 @@ describe('BreezeRequest', () => {
     it('应该正确合并和传递请求选项', async () => {
       const instanceOptions = { headers: { 'X-Instance': 'InstValue' } };
       const methodOptions = { headers: { 'X-Method': 'MethValue' }, dataType: 'json' as const }; // 添加 as const
-      const requestWithOptions = new BreezeRequest(instanceOptions);
+      const requestWithOptions = new Echo(instanceOptions); // Renamed from BreezeRequest
 
       await requestWithOptions.GET('/test', undefined, methodOptions); // 传递 methodOptions
 
@@ -210,7 +211,7 @@ describe('BreezeRequest', () => {
       // 为此测试创建一个具有特定 TRes 类型的实例
       // TRes 定义为可以包含 data 和可选的 modified 属性的对象
       type TestResponseType = { data?: { original: boolean }; modified?: boolean };
-      const specificRequest = new BreezeRequest<unknown, TestResponseType>();
+      const specificRequest = new Echo<unknown, TestResponseType>(); // Renamed from BreezeRequest
 
       vi.mocked(wx.request).mockImplementation(({ success }) => {
         // Reference wx.request directly
@@ -349,7 +350,7 @@ describe('BreezeRequest', () => {
       const originalWx = (globalThis as any).wx; // 保存原始 wx 对象
       (globalThis as any).wx = undefined; // 模拟 wx 不存在
 
-      const specificRequest = new BreezeRequest(); // 创建新实例以使用当前的 wx 状态
+      const specificRequest = new Echo(); // Renamed from BreezeRequest // 创建新实例以使用当前的 wx 状态
 
       await expect(specificRequest.GET('/test')).rejects.toThrow('wx.request is not defined. Please check if you are in a WeChat Mini Program environment.');
 
@@ -361,12 +362,12 @@ describe('BreezeRequest', () => {
   describe('自定义请求函数', () => {
     it('应该使用提供的自定义请求函数', async () => {
       const customRequestFn = vi.fn().mockResolvedValue({ data: 'custom response', statusCode: 201, header: { 'X-Custom': 'true' } });
-      const customRequestInstance = new BreezeRequest({}, customRequestFn as BreezeRequestCustom<unknown, unknown>);
+      const customRequestInstance = new Echo({}, customRequestFn as EchoRequestCustom<unknown, unknown>); // Renamed from BreezeRequest, BreezeRequestCustom
 
       const result = await customRequestInstance.GET('/custom-test');
 
       expect(customRequestFn).toHaveBeenCalledTimes(1);
-      // 调整断言以匹配 BreezeRequestConfig 结构
+      // 调整断言以匹配 EchoRequestConfig 结构
       expect(customRequestFn).toHaveBeenCalledWith(
         expect.objectContaining({
           url: '/custom-test',
@@ -433,9 +434,9 @@ describe('BreezeRequest', () => {
       vi.mocked(wx.request).mockImplementation(options => {
         // 模拟 defaultRequest 调用 setTask 的行为
         // 实际调用发生在 defaultRequest 内部，这里我们在测试中模拟这个效果
-        // 需要找到传递给 BreezeRequest 的 setTask 回调，但这比较困难直接模拟
-        // 因此，我们假设 BreezeRequest 正确传递了 setTask 给 defaultRequest
-        // defaultRequest 会调用它。BreezeRequest 内部的 taskResolver 会被触发。
+        // 需要找到传递给 Echo 的 setTask 回调，但这比较困难直接模拟
+        // 因此，我们假设 Echo 正确传递了 setTask 给 defaultRequest
+        // defaultRequest 会调用它。Echo 内部的 taskResolver 会被触发。
 
         // 模拟请求成功
         options.success?.({ data: 'test data', statusCode: 200, header: {} } as WechatMiniprogram.RequestSuccessCallbackResult<string>);

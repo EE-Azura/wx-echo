@@ -1,13 +1,13 @@
-export interface BreezeContext<TReq = unknown, TRes = unknown> {
+export interface EchoContext<TReq = unknown, TRes = unknown> {
   /**
    * 请求相关数据
-   * @type {BreezeRequestConfig}
+   * @type {EchoRequestConfig}
    */
-  request: BreezeRequestConfig<TReq>;
+  request: EchoRequestConfig<TReq>;
 
   /**
    * 响应相关数据
-   * @type {TRes | undefined} // 修改此类型
+   * @type {TRes | undefined}
    */
   response?: TRes;
 
@@ -30,13 +30,13 @@ export interface BreezeContext<TReq = unknown, TRes = unknown> {
   [key: string]: unknown;
 }
 
-export type BreezeNext = () => Promise<void>;
+export type EchoNext = () => Promise<void>;
 
-export type BreezeMiddleware<TReq = unknown, TRes = unknown> = (ctx: BreezeContext<TReq, TRes>, next: BreezeNext) => Promise<void> | void;
+export type EchoMiddleware<TReq = unknown, TRes = unknown> = (ctx: EchoContext<TReq, TRes>, next: EchoNext) => Promise<void> | void;
 
-export type BreezeErrorHandler<TReq = unknown, TRes = unknown> = (err: unknown, ctx: BreezeContext<TReq, TRes>) => Promise<void> | void;
+export type EchoErrorHandler<TReq = unknown, TRes = unknown> = (err: unknown, ctx: EchoContext<TReq, TRes>) => Promise<void> | void;
 
-export interface BreezeRequestOptions {
+export interface EchoRequestOptions {
   /**
    * 请求头
    * @type {Record<string, string>}
@@ -69,7 +69,7 @@ export interface BreezeRequestOptions {
   [key: string]: unknown;
 }
 
-export interface BreezeRequestConfig<T = unknown> {
+export interface EchoRequestConfig<T = unknown> {
   /**
    * 请求地址
    * @type {string}
@@ -84,31 +84,31 @@ export interface BreezeRequestConfig<T = unknown> {
 
   /**
    * 请求选项
-   * @type {BreezeRequestOptions}
+   * @type {EchoRequestOptions}
    */
-  options?: BreezeRequestOptions;
+  options?: EchoRequestOptions;
 
   /**
    * 设置/获取请求任务的回调函数
    * @type {Function}
    */
-  setTask?: (task: BreezeRequestTask) => void; // <--- 修改这里的参数类型
+  setTask?: (task: EchoRequestTask) => void;
 }
 
 /**
- * Breeze 请求任务接口，扩展了 Promise 功能
+ * Echo 请求任务接口，扩展了 Promise 功能
  * @template TRes 响应数据的类型
  */
-export interface BreezeRequestHandle<TRes = unknown> extends Promise<TRes> {
+export interface EchoRequestHandle<TRes = unknown> extends Promise<TRes> {
   /**
    * 异步获取底层的微信请求任务对象
-   * @returns {Promise<BreezeRequestTask>} 一个 Promise，将在任务可用时解析为任务对象
+   * @returns {Promise<EchoRequestTask>} 一个 Promise，将在任务可用时解析为任务对象
    */
-  getTask(): Promise<BreezeRequestTask>;
+  getTask(): Promise<EchoRequestTask>;
 }
 
-export type BreezeRequestTask = WechatMiniprogram.RequestTask | undefined;
+export type EchoRequestTask = WechatMiniprogram.RequestTask | undefined;
 
-export type BreezeRequestCustom<TReq = unknown, TRes = unknown> = (params: BreezeRequestConfig<TReq>) => Promise<TRes>;
+export type EchoRequestCustom<TReq = unknown, TRes = unknown> = (params: EchoRequestConfig<TReq>) => Promise<TRes>;
 
 export type HttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE' | 'CONNECT' | 'OPTIONS' | 'TRACE' | 'PATCH';

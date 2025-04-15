@@ -1,11 +1,11 @@
-import type { BreezeRequestConfig } from './types';
+import type { EchoRequestConfig } from './types';
 
 /**
  * 默认请求处理函数，用于微信小程序环境
- * @param {BreezeRequestConfig} config - 请求配置对象
+ * @param {EchoRequestConfig} config - 请求配置对象
  * @returns {Promise<WechatMiniprogram.RequestSuccessCallbackResult>} 请求结果的 Promise
  */
-export const defaultRequest = (config: BreezeRequestConfig<string | WechatMiniprogram.IAnyObject | ArrayBuffer>): Promise<WechatMiniprogram.RequestSuccessCallbackResult> => {
+export const defaultRequest = (config: EchoRequestConfig<string | WechatMiniprogram.IAnyObject | ArrayBuffer>): Promise<WechatMiniprogram.RequestSuccessCallbackResult> => {
   const { url, data, options = {}, setTask } = config;
   const { method = 'GET', ...restOptions } = options as { method?: WechatMiniprogram.RequestOption['method'] } & Omit<typeof options, 'method'>;
 

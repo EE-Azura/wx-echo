@@ -1,4 +1,4 @@
-import { BreezeContext, BreezeMiddleware, BreezeErrorHandler } from './types';
+import { EchoContext, EchoMiddleware, EchoErrorHandler } from './types';
 
 /**
  * 拦截器模块，灵感来自 Koa2 的中间件系统
@@ -15,46 +15,46 @@ export class Interceptor<TReq = unknown, TRes = unknown> {
   /**
    * 存储中间件函数的数组
    * @private
-   * @type {BreezeMiddleware[]}
+   * @type {EchoMiddleware[]}
    */
-  private middleware: BreezeMiddleware<TReq, TRes>[] = [];
+  private middleware: EchoMiddleware<TReq, TRes>[] = [];
 
   /**
    * 存储错误处理中间件函数的数组
    * @private
-   * @type {BreezeErrorHandler[]}
+   * @type {EchoErrorHandler[]}
    */
-  private errorHandlers: BreezeErrorHandler<TReq, TRes>[] = [];
+  private errorHandlers: EchoErrorHandler<TReq, TRes>[] = [];
 
   /**
    * 添加中间件到拦截器栈
-   * @param {BreezeMiddleware} fn - 中间件函数
-   * @returns {Interceptor<T>} 返回拦截器实例，支持链式调用
+   * @param {EchoMiddleware} fn - 中间件函数
+   * @returns {Interceptor<TReq, TRes>} 返回拦截器实例，支持链式调用
    */
-  use(fn: BreezeMiddleware<TReq, TRes>): Interceptor<TReq, TRes> {
+  use(fn: EchoMiddleware<TReq, TRes>): Interceptor<TReq, TRes> {
     this.middleware.push(fn);
     return this;
   }
 
   /**
    * 添加错误处理中间件到拦截器栈
-   * @param {BreezeErrorHandler} fn - 错误处理中间件函数
-   * @returns {Interceptor} 返回拦截器实例，支持链式调用
+   * @param {EchoErrorHandler} fn - 错误处理中间件函数
+   * @returns {Interceptor<TReq, TRes>} 返回拦截器实例，支持链式调用
    */
-  catch(fn: BreezeErrorHandler<TReq, TRes>): Interceptor<TReq, TRes> {
+  catch(fn: EchoErrorHandler<TReq, TRes>): Interceptor<TReq, TRes> {
     this.errorHandlers.push(fn);
     return this;
   }
 
   /**
    * 执行中间件栈
-   * @param {BreezeContext} - 初始上下文对象
+   * @param {EchoContext} - 初始上下文对象
    * @param {Function} coreMiddleware - 核心中间件函数
-   * @returns {Promise<BreezeContext>} 返回处理后的上下文对象
+   * @returns {Promise<EchoContext>} 返回处理后的上下文对象
    * @throws {Error} 当多次调用 next() 时抛出错误
    */
-  async execute(context: BreezeContext<TReq, TRes>, coreMiddleware: BreezeMiddleware<TReq, TRes>): Promise<BreezeContext<TReq, TRes>> {
-    const _middlewares = [...this.middleware, coreMiddleware] as BreezeMiddleware<TReq, TRes>[];
+  async execute(context: EchoContext<TReq, TRes>, coreMiddleware: EchoMiddleware<TReq, TRes>): Promise<EchoContext<TReq, TRes>> {
+    const _middlewares = [...this.middleware, coreMiddleware] as EchoMiddleware<TReq, TRes>[];
     let index = -1;
     /**
      * 递归调度函数，用于执行中间件
@@ -93,10 +93,10 @@ export class Interceptor<TReq = unknown, TRes = unknown> {
    * 处理执行过程中的错误
    * @private
    * @param {unknown} err - 捕获到的错误
-   * @param {BreezeContext} context - 上下文对象
+   * @param {EchoContext} context - 上下文对象
    * @returns {Promise<void>}
    */
-  private async handleError(err: unknown, context: BreezeContext<TReq, TRes>): Promise<void> {
+  private async handleError(err: unknown, context: EchoContext<TReq, TRes>): Promise<void> {
     // 在上下文中存储错误信息
     context.error = err;
 

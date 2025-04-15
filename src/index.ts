@@ -1,3 +1,3 @@
-import { BreezeRequest } from './breeze-request';
+import { Echo } from './wx-echo';
 
-export { BreezeRequest };
+export { Echo };

@@ -1,14 +1,4 @@
 /**
- * Types export for breeze-request
+ * Types export for wx-echo
  */
-export type {
-  // Core request/response types
-  BreezeContext,
-  BreezeNext,
-  BreezeMiddleware,
-  BreezeErrorHandler,
-  BreezeRequestOptions,
-  BreezeRequestConfig,
-  BreezeRequestCustom,
-  HttpMethod
-} from './types';
+export type { EchoContext, EchoNext, EchoMiddleware, EchoErrorHandler, EchoRequestOptions, EchoRequestConfig, EchoRequestCustom, HttpMethod } from './types';

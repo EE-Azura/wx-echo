@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Interceptor } from '../src/Interceptor';
-import { BreezeContext, BreezeNext } from '../src/types';
+import { EchoContext, EchoNext } from '../src/types';
 
 describe('拦截器', () => {
   let interceptor: Interceptor<unknown, unknown>;
@@ -25,7 +25,7 @@ describe('拦截器', () => {
     });
 
     // 提供一个核心中间件作为第二个参数
-    await interceptor.execute({} as BreezeContext<unknown, unknown>, async (ctx, next) => {
+    await interceptor.execute({} as EchoContext<unknown, unknown>, async (ctx, next) => {
       order.push('core');
       await next();
     });
@@ -45,7 +45,7 @@ describe('拦截器', () => {
     interceptor.catch(errorHandler);
 
     // 提供一个核心中间件作为第二个参数
-    const context = await interceptor.execute({} as BreezeContext<unknown, unknown>, async (ctx, next) => {
+    const context = await interceptor.execute({} as EchoContext<unknown, unknown>, async (ctx, next) => {
       await next();
     });
 
@@ -56,13 +56,13 @@ describe('拦截器', () => {
 
   it('应该组合多个拦截器', async () => {
     const interceptor1 = new Interceptor<unknown, unknown>();
-    const middleware1 = async (ctx: BreezeContext<unknown, unknown>, next: BreezeNext) => {
+    const middleware1 = async (ctx: EchoContext<unknown, unknown>, next: EchoNext) => {
       await next();
     };
     interceptor1.use(middleware1);
 
     const interceptor2 = new Interceptor<unknown, unknown>();
-    const middleware2 = async (ctx: BreezeContext<unknown, unknown>, next: BreezeNext) => {
+    const middleware2 = async (ctx: EchoContext<unknown, unknown>, next: EchoNext) => {
       await next();
     };
     interceptor2.use(middleware2);
@@ -75,7 +75,7 @@ describe('拦截器', () => {
     let executionCount = 0;
 
     // 提供一个核心中间件作为第二个参数，每次经过中间件都增加计数
-    await composed.execute({} as BreezeContext<unknown, unknown>, async (ctx, next) => {
+    await composed.execute({} as EchoContext<unknown, unknown>, async (ctx, next) => {
       executionCount++;
       await next();
     });
