@@ -6,7 +6,7 @@ import type { BreezeRequestConfig } from './types';
  * @returns {Promise<WechatMiniprogram.RequestSuccessCallbackResult>} 请求结果的 Promise
  */
 export const defaultRequest = (config: BreezeRequestConfig<string | WechatMiniprogram.IAnyObject | ArrayBuffer>): Promise<WechatMiniprogram.RequestSuccessCallbackResult> => {
-  const { url, data, options = {}, getTaskHandle } = config;
+  const { url, data, options = {}, setTask } = config;
   const { method = 'GET', ...restOptions } = options as { method?: WechatMiniprogram.RequestOption['method'] } & Omit<typeof options, 'method'>;
 
   return new Promise<WechatMiniprogram.RequestSuccessCallbackResult>((resolve, reject: (reason?: WechatMiniprogram.GeneralCallbackResult | Error) => void) => {
@@ -23,8 +23,8 @@ export const defaultRequest = (config: BreezeRequestConfig<string | WechatMinipr
       fail: reject
     });
 
-    if (getTaskHandle) {
-      getTaskHandle(requestTask);
+    if (setTask) {
+      setTask(requestTask);
     }
   });
 };

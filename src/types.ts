@@ -89,11 +89,25 @@ export interface BreezeRequestConfig<T = unknown> {
   options?: BreezeRequestOptions;
 
   /**
-   * 获取请求任务的回调函数
+   * 设置/获取请求任务的回调函数
    * @type {Function}
    */
-  getTaskHandle?: (task: unknown) => void;
+  setTask?: (task: BreezeRequestTask) => void; // <--- 修改这里的参数类型
 }
+
+/**
+ * Breeze 请求任务接口，扩展了 Promise 功能
+ * @template TRes 响应数据的类型
+ */
+export interface BreezeRequestHandle<TRes = unknown> extends Promise<TRes> {
+  /**
+   * 异步获取底层的微信请求任务对象
+   * @returns {Promise<BreezeRequestTask>} 一个 Promise，将在任务可用时解析为任务对象
+   */
+  getTask(): Promise<BreezeRequestTask>;
+}
+
+export type BreezeRequestTask = WechatMiniprogram.RequestTask | undefined;
 
 export type BreezeRequestCustom<TReq = unknown, TRes = unknown> = (params: BreezeRequestConfig<TReq>) => Promise<TRes>;
 
