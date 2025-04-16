@@ -21,25 +21,25 @@ const createMockRequestTask = (): WechatMiniprogram.RequestTask => ({
 
 describe('Echo', () => {
   // Renamed from BreezeRequest
-  let request: Echo<unknown>; // Renamed from BreezeRequest
+  let request: Echo<unknown>;
 
   beforeEach(() => {
     vi.clearAllMocks();
     // Ensure wx.request is correctly typed for mocking within tests
     // Use vi.mocked to work with the mocked function, now referencing wx.request directly
-    vi.mocked(wx.request).mockClear(); // Reference wx.request directly
-    request = new Echo(); // Renamed from BreezeRequest
+    vi.mocked(wx.request).mockClear();
+    request = new Echo();
   });
 
   describe('构造函数', () => {
     it('应该使用默认选项创建实例', () => {
-      expect(request).toBeInstanceOf(Echo); // Renamed from BreezeRequest
+      expect(request).toBeInstanceOf(Echo);
     });
 
     it('应该使用自定义选项创建实例', () => {
       const options = { headers: { 'Content-Type': 'application/json' } };
-      const customRequest = new Echo(options); // Renamed from BreezeRequest
-      expect(customRequest).toBeInstanceOf(Echo); // Renamed from BreezeRequest
+      const customRequest = new Echo(options);
+      expect(customRequest).toBeInstanceOf(Echo);
     });
   });
 
@@ -61,7 +61,8 @@ describe('Echo', () => {
         // Reference wx.request directly
         expect.objectContaining({
           url: '/test',
-          method: 'GET'
+          method: 'GET',
+          header: {}
         })
       );
       // 调整期望值以匹配模拟的完整响应结构
@@ -76,7 +77,8 @@ describe('Echo', () => {
         expect.objectContaining({
           url: '/test',
           data,
-          method: 'POST'
+          method: 'POST',
+          header: {}
         })
       );
     });
@@ -89,7 +91,8 @@ describe('Echo', () => {
         expect.objectContaining({
           url: '/test/1',
           data,
-          method: 'PUT'
+          method: 'PUT',
+          header: {}
         })
       );
     });
@@ -100,7 +103,8 @@ describe('Echo', () => {
         // Reference wx.request directly
         expect.objectContaining({
           url: '/test/1',
-          method: 'DELETE'
+          method: 'DELETE',
+          header: {}
         })
       );
     });
@@ -113,7 +117,8 @@ describe('Echo', () => {
         expect.objectContaining({
           url: '/test/1',
           data,
-          method: 'PATCH'
+          method: 'PATCH',
+          header: {}
         })
       );
     });
@@ -129,7 +134,7 @@ describe('Echo', () => {
         expect.objectContaining({
           url: '/test',
           method: 'GET',
-          headers: {
+          header: {
             'X-Instance': 'InstValue',
             'X-Method': 'MethValue'
           },
@@ -144,7 +149,8 @@ describe('Echo', () => {
       expect(wx.request).toHaveBeenCalledWith(
         expect.objectContaining({
           url: '/test',
-          method: 'HEAD'
+          method: 'HEAD',
+          header: {}
         })
       );
     });
@@ -155,7 +161,8 @@ describe('Echo', () => {
       expect(wx.request).toHaveBeenCalledWith(
         expect.objectContaining({
           url: '/test',
-          method: 'OPTIONS'
+          method: 'OPTIONS',
+          header: {}
         })
       );
     });
@@ -193,7 +200,7 @@ describe('Echo', () => {
       request.use(async (ctx, next) => {
         ctx.request.options = {
           ...(ctx.request.options || {}),
-          headers: { 'X-Custom': 'Value' }
+          headers: { 'X-Custom': 'Value' } // Middleware modifies 'headers'
         };
         await next();
       });
@@ -202,7 +209,7 @@ describe('Echo', () => {
       expect(wx.request).toHaveBeenCalledWith(
         // Reference wx.request directly
         expect.objectContaining({
-          headers: { 'X-Custom': 'Value' }
+          header: { 'X-Custom': 'Value' }
         })
       );
     });
@@ -401,7 +408,8 @@ describe('Echo', () => {
         // Reference wx.request directly
         expect.objectContaining({
           url: 'https://api.example.com/users',
-          method: 'GET'
+          method: 'GET',
+          header: {}
         })
       );
     });
@@ -414,7 +422,8 @@ describe('Echo', () => {
         // Reference wx.request directly
         expect.objectContaining({
           url: 'https://other-api.com/users',
-          method: 'GET'
+          method: 'GET',
+          header: {}
         })
       );
     });

@@ -7,7 +7,7 @@ import type { EchoRequestConfig } from './types';
  */
 export const defaultRequest = (config: EchoRequestConfig<string | WechatMiniprogram.IAnyObject | ArrayBuffer>): Promise<WechatMiniprogram.RequestSuccessCallbackResult> => {
   const { url, data, options = {}, setTask } = config;
-  const { method = 'GET', ...restOptions } = options as { method?: WechatMiniprogram.RequestOption['method'] } & Omit<typeof options, 'method'>;
+  const { method = 'GET', headers, ...restOptions } = options as { method?: WechatMiniprogram.RequestOption['method'] } & Omit<typeof options, 'method'>;
 
   return new Promise<WechatMiniprogram.RequestSuccessCallbackResult>((resolve, reject: (reason?: WechatMiniprogram.GeneralCallbackResult | Error) => void) => {
     if (!wx?.request) {
@@ -17,6 +17,7 @@ export const defaultRequest = (config: EchoRequestConfig<string | WechatMiniprog
     const requestTask: WechatMiniprogram.RequestTask = wx.request({
       url,
       data,
+      header: headers as WechatMiniprogram.IAnyObject | undefined, // Cast headers to the expected type
       method,
       success: resolve,
       ...restOptions,
