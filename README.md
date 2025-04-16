@@ -111,25 +111,28 @@ createUser();
 
 #### 构造函数
 
-| 构造函数                             | 参数                                                                                                | 描述                                                   |
-| ------------------------------------ | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| `new Echo(options?, requestCustom?)` | `options`: EchoRequestOptions - 默认请求选项<br>`requestCustom`: EchoRequestCustom - 自定义请求函数 | 创建一个新的 Echo 实例，可配置默认选项和自定义请求函数 |
+使用 `new Echo()` 创建实例。
+
+| 参数            | 类型                            | 描述                                                                                                                                                      | 是否必需 |
+| --------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `options`       | `EchoRequestOptions`            | 实例的默认请求选项。这些选项将与每次请求时传入的选项合并。                                                                                                | 否       |
+| `requestCustom` | `EchoRequestCustom<TReq, TRes>` | 自定义的底层 HTTP 请求函数。默认为[一个基于 `wx.request` 的实现](src/default.ts)。您可以提供自己的函数来适配不同的 JavaScript 环境（如浏览器、Node.js）。 | 否       |
 
 #### 方法
 
-| 方法                               | 参数                                                                                                  | 返回值                 | 描述                                  |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------- | ------------------------------------- |
-| `request<R>(url, data, options)`   | `url`: string - 请求URL<br>`data`: TReq - 请求数据<br>`options`: EchoRequestOptions - 请求选项        | `EchoRequestHandle<R>` | 发送一个 HTTP 请求                    |
-| `use(fn)`                          | `fn`: EchoMiddleware - 中间件函数                                                                     | `Echo` 实例            | 添加一个中间件函数，用于处理请求/响应 |
-| `catch(fn)`                        | `fn`: EchoErrorHandler - 错误处理函数                                                                 | `Echo` 实例            | 添加一个错误处理中间件函数            |
-| `useBaseUrl(baseUrl)`              | `baseUrl`: string - 基础URL                                                                           | `Echo` 实例            | 设置 API 基础 URL                     |
-| `GET<R>(url, params?, options?)`   | `url`: string - 请求URL<br>`params?`: unknown - 请求参数<br>`options?`: EchoRequestOptions - 请求选项 | `EchoRequestHandle<R>` | 发送 GET 请求                         |
-| `POST<R>(url, data?, options?)`    | `url`: string - 请求URL<br>`data?`: unknown - 请求数据<br>`options?`: EchoRequestOptions - 请求选项   | `EchoRequestHandle<R>` | 发送 POST 请求                        |
-| `PUT<R>(url, data?, options?)`     | `url`: string - 请求URL<br>`data?`: unknown - 请求数据<br>`options?`: EchoRequestOptions - 请求选项   | `EchoRequestHandle<R>` | 发送 PUT 请求                         |
-| `DELETE<R>(url, data?, options?)`  | `url`: string - 请求URL<br>`data?`: unknown - 请求数据<br>`options?`: EchoRequestOptions - 请求选项   | `EchoRequestHandle<R>` | 发送 DELETE 请求                      |
-| `PATCH<R>(url, data?, options?)`   | `url`: string - 请求URL<br>`data?`: unknown - 请求数据<br>`options?`: EchoRequestOptions - 请求选项   | `EchoRequestHandle<R>` | 发送 PATCH 请求                       |
-| `HEAD<R>(url, data?, options?)`    | `url`: string - 请求URL<br>`data?`: unknown - 请求数据<br>`options?`: EchoRequestOptions - 请求选项   | `EchoRequestHandle<R>` | 发送 HEAD 请求                        |
-| `OPTIONS<R>(url, data?, options?)` | `url`: string - 请求URL<br>`data?`: unknown - 请求数据<br>`options?`: EchoRequestOptions - 请求选项   | `EchoRequestHandle<R>` | 发送 OPTIONS 请求                     |
+| 方法                               | 参数                                                                                                                              | 返回值                 | 描述                                  |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ------------------------------------- |
+| `request<R>(url, data, options)`   | <ul><li>`url`: string - 请求URL</li><li>`data`: TReq - 请求数据</li><li>`options`: EchoRequestOptions - 请求选项</li></ul>        | `EchoRequestHandle<R>` | 发送一个 HTTP 请求                    |
+| `use(fn)`                          | `fn`: EchoMiddleware - 中间件函数                                                                                                 | `Echo` 实例            | 添加一个中间件函数，用于处理请求/响应 |
+| `catch(fn)`                        | `fn`: EchoErrorHandler - 错误处理函数                                                                                             | `Echo` 实例            | 添加一个错误处理中间件函数            |
+| `useBaseUrl(baseUrl)`              | `baseUrl`: string - 基础URL                                                                                                       | `Echo` 实例            | 设置 API 基础 URL                     |
+| `GET<R>(url, params?, options?)`   | <ul><li>`url`: string - 请求URL</li><li>`params?`: unknown - 请求参数</li><li>`options?`: EchoRequestOptions - 请求选项</li></ul> | `EchoRequestHandle<R>` | 发送 GET 请求                         |
+| `POST<R>(url, data?, options?)`    | <ul><li>`url`: string - 请求URL</li><li>`data?`: unknown - 请求数据</li><li>`options?`: EchoRequestOptions - 请求选项</li></ul>   | `EchoRequestHandle<R>` | 发送 POST 请求                        |
+| `PUT<R>(url, data?, options?)`     | <ul><li>`url`: string - 请求URL</li><li>`data?`: unknown - 请求数据</li><li>`options?`: EchoRequestOptions - 请求选项</li></ul>   | `EchoRequestHandle<R>` | 发送 PUT 请求                         |
+| `DELETE<R>(url, data?, options?)`  | <ul><li>`url`: string - 请求URL</li><li>`data?`: unknown - 请求数据</li><li>`options?`: EchoRequestOptions - 请求选项</li></ul>   | `EchoRequestHandle<R>` | 发送 DELETE 请求                      |
+| `PATCH<R>(url, data?, options?)`   | <ul><li>`url`: string - 请求URL</li><li>`data?`: unknown - 请求数据</li><li>`options?`: EchoRequestOptions - 请求选项</li></ul>   | `EchoRequestHandle<R>` | 发送 PATCH 请求                       |
+| `HEAD<R>(url, data?, options?)`    | <ul><li>`url`: string - 请求URL</li><li>`data?`: unknown - 请求数据</li><li>`options?`: EchoRequestOptions - 请求选项</li></ul>   | `EchoRequestHandle<R>` | 发送 HEAD 请求                        |
+| `OPTIONS<R>(url, data?, options?)` | <ul><li>`url`: string - 请求URL</li><li>`data?`: unknown - 请求数据</li><li>`options?`: EchoRequestOptions - 请求选项</li></ul>   | `EchoRequestHandle<R>` | 发送 OPTIONS 请求                     |
 
 ### 请求选项 (EchoRequestOptions)
 
@@ -229,7 +232,7 @@ echo.GET('/api/user/profile').then(profile => {
 
 可以提供自定义的请求实现来适配不同环境。
 
-**重要提示：** 当您为微信小程序环境编写自定义请求函数 (`requestCustom`) 时，请注意 WX Echo 的 `options` 对象中使用的是 `headers` 键来表示请求头，而微信小程序的 `wx.request` API 使用的是 `header` 键。您需要在自定义函数中进行相应的映射，如默认适配器所示：`header: options.headers as WechatMiniprogram.IAnyObject | undefined`。
+**重要提示：** 当您为微信小程序环境编写自定义请求函数 (`requestCustom`) 时，请注意 WX Echo 的 `options` 对象中使用的是 `headers` 键来表示请求头，而微信小程序的 `wx.request` API 使用的是 `header` 键。您需要在自定义函数中进行相应的映射，如默认适配器所示：`header: options.headers as WechatMiniprogram.IAnyObject | undefined`。有关 `wx.request` 的详细选项，请参阅[微信官方文档](https://developers.weixin.qq.com/miniprogram/dev/api/network/request/wx.request.html)。
 
 ```typescript
 import { Echo, EchoRequestConfig, EchoRequestCustom } from 'wx-echo';
@@ -397,55 +400,6 @@ interface EchoRequestHandle<T> extends Promise<T> {
 
 // 自定义请求函数类型
 type EchoRequestCustom<TReq, TRes> = (config: EchoRequestConfig<TReq>) => Promise<TRes>;
-```
-
-## 🔍 常见问题
-
-### 如何处理请求超时？
-
-```typescript
-// 设置全局超时
-const echo = new Echo({ timeout: 10000 }); // 10秒
-
-// 或为特定请求设置超时
-echo.GET('/slow-api', null, { timeout: 30000 }); // 30秒
-```
-
-### 如何取消请求？
-
-```typescript
-const request = echo.GET('/api/data');
-
-// 获取任务对象并取消请求
-request.getTask().then(task => {
-  // 具体的取消方法取决于底层实现
-  // 例如 wx.request 的 RequestTask 使用 abort()
-  if (typeof task.abort === 'function') {
-    task.abort();
-  }
-});
-```
-
-### 如何处理上传和下载进度？
-
-在微信小程序环境中，可以利用 RequestTask 的能力：
-
-```typescript
-// WX Echo 已默认支持微信小程序请求
-// 使用方式如下：
-const uploadRequest = echo.POST('/api/upload', formData, {
-  // 自定义选项，将被传递给底层的 wx.request
-  onProgressUpdate: res => {
-    console.log('上传进度:', res.progress);
-    console.log('已经上传的数据长度:', res.totalBytesSent);
-    console.log('预期需要上传的数据总长度:', res.totalBytesExpectedToSend);
-  }
-});
-
-// 获取任务对象以控制请求
-uploadRequest.getTask().then(task => {
-  // 可以调用 abort() 等方法
-});
 ```
 
 ## 📄 许可证
