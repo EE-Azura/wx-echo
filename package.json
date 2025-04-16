@@ -50,6 +50,7 @@
   "devDependencies": {
     "@eslint/js": "^9.21.0",
     "@types/node": "^22.13.9",
+    "@types/wechat-miniprogram": "^3.4.8",
     "eslint": "^9.21.0",
     "eslint-config-prettier": "^10.0.2",
     "eslint-plugin-prettier": "^5.2.1",
@@ -64,7 +65,13 @@
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "^4.24.0"
   },
-  "dependencies": {
-    "@types/wechat-miniprogram": "^3.4.8"
+  "dependencies": {},
+  "peerDependencies": {
+    "@types/wechat-miniprogram": ">=3.4.0"
+  },
+  "peerDependenciesMeta": {
+    "@types/wechat-miniprogram": {
+      "optional": true
+    }
   }
 }
