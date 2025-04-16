@@ -37,8 +37,19 @@
     "url": "git+https://github.com/EE-Azura/wx-echo.git"
   },
   "keywords": [
-    "nodejs",
-    "javascript",
+    "wx-echo",
+    "http",
+    "request",
+    "fetch",
+    "ajax",
+    "promise",
+    "middleware",
+    "interceptor",
+    "wechat",
+    "weixin",
+    "miniprogram",
+    "小程序",
+    "http-client",
     "typescript"
   ],
   "author": "EE_Azura",
