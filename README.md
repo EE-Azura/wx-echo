@@ -27,6 +27,15 @@ WX Echo 提供了一个简洁而强大的 HTTP 客户端，核心特色是基于
 npm install wx-echo
 ```
 
+**TypeScript 用户请注意：**
+
+为了获得完整的类型支持（特别是在使用默认的微信小程序适配器时），您还需要安装微信小程序的类型定义：
+
+```bash
+# 使用 npm
+npm install --save-dev @types/wechat-miniprogram
+```
+
 ## 🔰 快速开始
 
 ```typescript
@@ -120,31 +129,33 @@ createUser();
 
 #### 方法
 
-| 方法                               | 参数                                                                                                                              | 返回值                 | 描述                                  |
-| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ------------------------------------- |
-| `request<R>(url, data, options)`   | <ul><li>`url`: string - 请求URL</li><li>`data`: TReq - 请求数据</li><li>`options`: EchoRequestOptions - 请求选项</li></ul>        | `EchoRequestHandle<R>` | 发送一个 HTTP 请求                    |
-| `use(fn)`                          | `fn`: EchoMiddleware - 中间件函数                                                                                                 | `Echo` 实例            | 添加一个中间件函数，用于处理请求/响应 |
-| `catch(fn)`                        | `fn`: EchoErrorHandler - 错误处理函数                                                                                             | `Echo` 实例            | 添加一个错误处理中间件函数            |
-| `useBaseUrl(baseUrl)`              | `baseUrl`: string - 基础URL                                                                                                       | `Echo` 实例            | 设置 API 基础 URL                     |
-| `GET<R>(url, params?, options?)`   | <ul><li>`url`: string - 请求URL</li><li>`params?`: unknown - 请求参数</li><li>`options?`: EchoRequestOptions - 请求选项</li></ul> | `EchoRequestHandle<R>` | 发送 GET 请求                         |
-| `POST<R>(url, data?, options?)`    | <ul><li>`url`: string - 请求URL</li><li>`data?`: unknown - 请求数据</li><li>`options?`: EchoRequestOptions - 请求选项</li></ul>   | `EchoRequestHandle<R>` | 发送 POST 请求                        |
-| `PUT<R>(url, data?, options?)`     | <ul><li>`url`: string - 请求URL</li><li>`data?`: unknown - 请求数据</li><li>`options?`: EchoRequestOptions - 请求选项</li></ul>   | `EchoRequestHandle<R>` | 发送 PUT 请求                         |
-| `DELETE<R>(url, data?, options?)`  | <ul><li>`url`: string - 请求URL</li><li>`data?`: unknown - 请求数据</li><li>`options?`: EchoRequestOptions - 请求选项</li></ul>   | `EchoRequestHandle<R>` | 发送 DELETE 请求                      |
-| `PATCH<R>(url, data?, options?)`   | <ul><li>`url`: string - 请求URL</li><li>`data?`: unknown - 请求数据</li><li>`options?`: EchoRequestOptions - 请求选项</li></ul>   | `EchoRequestHandle<R>` | 发送 PATCH 请求                       |
-| `HEAD<R>(url, data?, options?)`    | <ul><li>`url`: string - 请求URL</li><li>`data?`: unknown - 请求数据</li><li>`options?`: EchoRequestOptions - 请求选项</li></ul>   | `EchoRequestHandle<R>` | 发送 HEAD 请求                        |
-| `OPTIONS<R>(url, data?, options?)` | <ul><li>`url`: string - 请求URL</li><li>`data?`: unknown - 请求数据</li><li>`options?`: EchoRequestOptions - 请求选项</li></ul>   | `EchoRequestHandle<R>` | 发送 OPTIONS 请求                     |
+| 方法                               | 参数                                                                                                                                            | 返回值                 | 描述                                  |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ------------------------------------- |
+| `request<R>(url, data?, options?)` | <ul><li>`url`: string - 请求URL</li><li>`data?`: TReq - 请求数据</li><li>`options?`: EchoRequestOptions - 请求选项</li></ul>                    | `EchoRequestHandle<R>` | 发送一个 HTTP 请求                    |
+| `use(fn)`                          | `fn`: EchoMiddleware - 中间件函数                                                                                                               | `Echo` 实例            | 添加一个中间件函数，用于处理请求/响应 |
+| `catch(fn)`                        | `fn`: EchoErrorHandler - 错误处理函数                                                                                                           | `Echo` 实例            | 添加一个错误处理中间件函数            |
+| `useBaseUrl(baseUrl)`              | `baseUrl`: string - 基础URL                                                                                                                     | `Echo` 实例            | 设置 API 基础 URL                     |
+| `GET<R>(url, data?, options?)`     | <ul><li>`url`: string - 请求URL</li><li>`data?`: TReq - 请求数据 (通常用于查询参数)</li><li>`options?`: EchoRequestOptions - 请求选项</li></ul> | `EchoRequestHandle<R>` | 发送 GET 请求                         |
+| `POST<R>(url, data?, options?)`    | <ul><li>`url`: string - 请求URL</li><li>`data?`: TReq - 请求数据</li><li>`options?`: EchoRequestOptions - 请求选项</li></ul>                    | `EchoRequestHandle<R>` | 发送 POST 请求                        |
+| `PUT<R>(url, data?, options?)`     | <ul><li>`url`: string - 请求URL</li><li>`data?`: unknown - 请求数据</li><li>`options?`: EchoRequestOptions - 请求选项</li></ul>                 | `EchoRequestHandle<R>` | 发送 PUT 请求                         |
+| `DELETE<R>(url, data?, options?)`  | <ul><li>`url`: string - 请求URL</li><li>`data?`: unknown - 请求数据</li><li>`options?`: EchoRequestOptions - 请求选项</li></ul>                 | `EchoRequestHandle<R>` | 发送 DELETE 请求                      |
+| `PATCH<R>(url, data?, options?)`   | <ul><li>`url`: string - 请求URL</li><li>`data?`: unknown - 请求数据</li><li>`options?`: EchoRequestOptions - 请求选项</li></ul>                 | `EchoRequestHandle<R>` | 发送 PATCH 请求                       |
+| `HEAD<R>(url, data?, options?)`    | <ul><li>`url`: string - 请求URL</li><li>`data?`: unknown - 请求数据</li><li>`options?`: EchoRequestOptions - 请求选项</li></ul>                 | `EchoRequestHandle<R>` | 发送 HEAD 请求                        |
+| `OPTIONS<R>(url, data?, options?)` | <ul><li>`url`: string - 请求URL</li><li>`data?`: unknown - 请求数据</li><li>`options?`: EchoRequestOptions - 请求选项</li></ul>                 | `EchoRequestHandle<R>` | 发送 OPTIONS 请求                     |
 
 ### 请求选项 (EchoRequestOptions)
+
+`EchoRequestOptions` 用于配置单次请求的行为，例如请求方法、头部、超时等。这些选项最终会传递给底层的请求适配器 (`requestCustom`)。**注意：** 请求体数据 (`data`) 应作为 `request` 或 HTTP 快捷方法 (如 `GET`, `POST`) 的第二个参数传递，而不是放在 `options` 对象中。
 
 | 选项           | 类型   | 描述                                                                                                              | 默认值  |
 | -------------- | ------ | ----------------------------------------------------------------------------------------------------------------- | ------- |
 | `method`       | string | HTTP 请求方法 (GET, POST 等)                                                                                      | `'GET'` |
 | `headers`      | object | 请求头对象。**注意：** 库内部使用 `headers`，但在默认的微信小程序适配器中会映射到 `wx.request` 的 `header` 选项。 | `{}`    |
 | `timeout`      | number | 请求超时时间 (毫秒)                                                                                               | -       |
-| `dataType`     | string | 期望的响应数据类型 (如 'json')                                                                                    | -       |
-| `responseType` | string | 响应的数据格式                                                                                                    | -       |
-| `params`       | object | URL 查询参数                                                                                                      | -       |
-| `...`          | any    | 其他特定于底层请求实现的选项                                                                                      | -       |
+| `responseType` | string | 响应的数据格式 (例如 'text', 'arraybuffer')。                                                                     | -       |
+| `...`          | any    | 其他特定于底层请求实现的选项 (例如 `dataType` 在 `wx.request` 中)                                                 | -       |
+
+**注意：** 除了库核心逻辑（如中间件处理、URL 拼接）明确使用的选项外，所有请求选项最终都会传递给底层的请求函数（适配器）。默认适配器基于 `wx.request`，因此支持其所有选项。请注意，`wx.request` 本身可能对某些选项（如 `responseType`, `dataType` 等）有自己的默认值，具体请参阅[微信官方文档](https://developers.weixin.qq.com/miniprogram/dev/api/network/request/wx.request.html)。
 
 ### 中间件与错误处理
 
@@ -163,16 +174,16 @@ type EchoMiddleware<TReq, TRes> = (ctx: EchoContext<TReq, TRes>, next: EchoNext)
 
 #### 错误处理函数 (EchoErrorHandler)
 
-错误处理函数接收与中间件相同的参数：
+错误处理函数接收两个参数：
 
-- `ctx`: 上下文对象，包含错误信息
-- `next`: 调用下一个错误处理器的函数
+- `err`: 捕获到的错误信息
+- `ctx`: 上下文对象，包含请求、响应和错误信息
 
 ```typescript
-type EchoErrorHandler<TReq, TRes> = (ctx: EchoContext<TReq, TRes>, next: EchoNext) => Promise<void> | void;
+type EchoErrorHandler<TReq, TRes> = (err: unknown, ctx: EchoContext<TReq, TRes>) => Promise<void> | void;
 ```
 
-在错误处理中间件内，可以检查 `ctx.error` 来处理错误，并可以设置 `ctx.errorHandled = true` 来标记错误已处理。
+在错误处理中间件内，可以检查 `err` 和 `ctx.error` 来处理错误，并可以设置 `ctx.errorHandled = true` 来标记错误已处理。
 
 ### 请求上下文 (EchoContext)
 
@@ -189,7 +200,12 @@ type EchoErrorHandler<TReq, TRes> = (ctx: EchoContext<TReq, TRes>, next: EchoNex
 
 ```typescript
 interface EchoRequestHandle<T> extends Promise<T> {
-  getTask(): Promise<EchoRequestTask>;
+  /**
+   * 异步获取底层的请求任务对象。
+   * @returns {Promise<EchoRequestTask>} 一个 Promise，将在任务可用时解析为任务对象。
+   * 注意：任务对象的具体类型 (例如 RequestTask, AbortController) 取决于使用的请求适配器，此处类型为 unknown。
+   */
+  getTask(): Promise<EchoRequestTask>; // 返回 Promise<unknown>
 }
 ```
 
@@ -235,27 +251,44 @@ echo.GET('/api/user/profile').then(profile => {
 **重要提示：** 当您为微信小程序环境编写自定义请求函数 (`requestCustom`) 时，请注意 WX Echo 的 `options` 对象中使用的是 `headers` 键来表示请求头，而微信小程序的 `wx.request` API 使用的是 `header` 键。您需要在自定义函数中进行相应的映射，如默认适配器所示：`header: options.headers as WechatMiniprogram.IAnyObject | undefined`。有关 `wx.request` 的详细选项，请参阅[微信官方文档](https://developers.weixin.qq.com/miniprogram/dev/api/network/request/wx.request.html)。
 
 ```typescript
-import { Echo, EchoRequestConfig, EchoRequestCustom } from 'wx-echo';
+import { Echo, EchoRequestConfig, EchoRequestCustom, EchoRequestOptions } from 'wx-echo'; // Import EchoRequestOptions
 
 // 为浏览器环境创建自定义请求函数 (示例)
 const browserRequest: EchoRequestCustom<any, any> = async (config: EchoRequestConfig<any>) => {
-  const { url, data, options, setTask } = config;
+  // 从 config 中解构 url, data, options, setTask
+  const { url, data, options = {}, setTask } = config;
 
   // 使用 fetch API
   const controller = new AbortController();
-  setTask(controller); // 保存 AbortController 以便可以取消请求
+  if (setTask) {
+    setTask(controller); // 保存 AbortController 以便可以取消请求
+  }
 
   const response = await fetch(url, {
-    method: options.method,
-    headers: options.headers, // fetch API 也使用 headers
-    body: data ? JSON.stringify(data) : undefined,
+    method: options.method, // 从 options 获取 method
+    headers: options.headers, // 从 options 获取 headers
+    body: data ? JSON.stringify(data) : undefined, // data 来自 config.data
     signal: controller.signal
+    // 其他 fetch 支持的选项可以从 options 中获取，例如:
+    // mode: options.mode,
+    // cache: options.cache,
+    // credentials: options.credentials,
+    // redirect: options.redirect,
+    // referrerPolicy: options.referrerPolicy,
   });
 
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
 
+  // 根据 options.responseType 处理响应 (示例)
+  if (options.responseType === 'text') {
+    return response.text();
+  }
+  if (options.responseType === 'arraybuffer') {
+    return response.arrayBuffer();
+  }
+  // 默认为 JSON
   return response.json();
 };
 
@@ -265,22 +298,25 @@ const browserEcho = new Echo({}, browserRequest);
 // 微信小程序自定义请求函数示例 (强调 header 映射)
 const customWxRequest: EchoRequestCustom<any, any> = async (config: EchoRequestConfig<any>) => {
   return new Promise((resolve, reject) => {
-    const { url, data, options, setTask } = config;
+    // 从 config 中解构
+    const { url, data, options = {}, setTask } = config;
 
     const requestTask = wx.request({
       url,
-      data,
-      method: options.method as WechatMiniprogram.RequestOption['method'],
+      data, // data 来自 config.data
+      method: options.method as WechatMiniprogram.RequestOption['method'], // 从 options 获取
       // **注意这里的映射**
-      header: options.headers as WechatMiniprogram.IAnyObject | undefined,
-      timeout: options.timeout,
-      dataType: options.dataType,
-      responseType: options.responseType,
-      // ... 其他 wx.request 支持的选项
+      header: options.headers as WechatMiniprogram.IAnyObject | undefined, // 从 options 获取
+      timeout: options.timeout, // 从 options 获取
+      // dataType: options.dataType, // 从 options 获取 (如果需要)
+      responseType: options.responseType, // 从 options 获取
+      // ... 其他 wx.request 支持的选项可以从 options 的扩展属性获取
       success: res => resolve(res.data), // 通常 resolve res.data
       fail: reject
     });
-    setTask(requestTask);
+    if (setTask) {
+      setTask(requestTask);
+    }
   });
 };
 
@@ -356,50 +392,52 @@ echo.use(cacheMiddleware(5 * 60 * 1000));
 ```typescript
 // 请求选项类型
 interface EchoRequestOptions {
-  method?: string;
-  headers?: Record<string, any>;
+  method?: HttpMethod;
+  headers?: Record<string, string>; // 注意: 默认适配器映射到 header
   timeout?: number;
-  dataType?: string;
-  responseType?: string;
-  params?: Record<string, any>;
-  [key: string]: any;
+  responseType?: string; // 例如 'text', 'arraybuffer'
+  [key: string]: unknown; // 其他传递给适配器的选项 (如 wx.request 的 dataType)
 }
 
-// 请求配置类型
-interface EchoRequestConfig<TReq> {
+// 请求配置类型 (传递给适配器)
+interface EchoRequestConfig<TReq = unknown> {
   url: string;
-  data: TReq;
-  options: EchoRequestOptions;
-  setTask: (task: any) => void;
+  data?: TReq; // 请求数据
+  options?: EchoRequestOptions; // 请求选项
+  setTask?: (task: EchoRequestTask) => void; // 设置任务对象的回调
 }
 
-// 请求上下文类型
-interface EchoContext<TReq, TRes> {
+// 请求上下文类型 (用于中间件)
+interface EchoContext<TReq = unknown, TRes = unknown> {
   request: EchoRequestConfig<TReq>;
-  error?: any;
   response?: TRes;
+  error?: unknown;
   errorHandled?: boolean;
+  [key: string]: unknown; // 允许中间件添加自定义属性
 }
 
 // 中间件 next 函数类型
 type EchoNext = () => Promise<void>;
 
-// 中间件函数类型
-type EchoMiddleware<TReq, TRes> = (ctx: EchoContext<TReq, TRes>, next: EchoNext) => Promise<void> | void;
+// 常规中间件函数类型
+type EchoMiddleware<TReq = unknown, TRes = unknown> = (ctx: EchoContext<TReq, TRes>, next: EchoNext) => Promise<void> | void;
 
-// 错误处理函数类型
-type EchoErrorHandler<TReq, TRes> = (ctx: EchoContext<TReq, TRes>, next: EchoNext) => Promise<void> | void;
+// 错误处理中间件函数类型
+type EchoErrorHandler<TReq = unknown, TRes = unknown> = (err: unknown, ctx: EchoContext<TReq, TRes>) => Promise<void> | void;
 
-// 请求任务类型 (由底层请求实现定义)
-type EchoRequestTask = any;
+// 底层请求任务对象的通用类型 (具体类型取决于适配器)
+type EchoRequestTask = unknown;
 
-// 请求句柄类型
-interface EchoRequestHandle<T> extends Promise<T> {
-  getTask(): Promise<EchoRequestTask>;
+// 请求句柄类型 (Promise + getTask)
+interface EchoRequestHandle<TRes = unknown> extends Promise<TRes> {
+  getTask(): Promise<EchoRequestTask>; // 返回 Promise<unknown>
 }
 
-// 自定义请求函数类型
-type EchoRequestCustom<TReq, TRes> = (config: EchoRequestConfig<TReq>) => Promise<TRes>;
+// 自定义请求适配器函数类型
+type EchoRequestCustom<TReq = unknown, TRes = unknown> = (config: EchoRequestConfig<TReq>) => Promise<TRes>;
+
+// HTTP 方法类型
+type HttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE' | 'CONNECT' | 'OPTIONS' | 'TRACE' | 'PATCH';
 ```
 
 ## 📄 许可证
