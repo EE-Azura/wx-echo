@@ -101,13 +101,13 @@ export interface EchoRequestConfig<T = unknown> {
  */
 export interface EchoRequestHandle<TRes = unknown> extends Promise<TRes> {
   /**
-   * 异步获取底层的微信请求任务对象
-   * @returns {Promise<EchoRequestTask>} 一个 Promise，将在任务可用时解析为任务对象
+   * 异步获取底层的请求任务对象
+   * @returns {Promise<EchoRequestTask>} 一个 Promise，将在任务可用时解析为任务对象 (类型为 unknown，具体类型取决于适配器)
    */
   getTask(): Promise<EchoRequestTask>;
 }
 
-export type EchoRequestTask = WechatMiniprogram.RequestTask | undefined;
+export type EchoRequestTask = unknown;
 
 export type EchoRequestCustom<TReq = unknown, TRes = unknown> = (params: EchoRequestConfig<TReq>) => Promise<TRes>;
 

@@ -16,7 +16,7 @@ import type {
  * Echo 类，提供 HTTP 请求方法和中间件支持
  * @class Echo
  */
-export class Echo<TReq = unknown, TRes = unknown> {
+export class Echo<TReq = string | object | ArrayBuffer, TRes = unknown> {
   /**
    * 内部拦截器实例
    * @private
@@ -41,7 +41,6 @@ export class Echo<TReq = unknown, TRes = unknown> {
    * @param {Function} requestCustom - 自定义请求处理函数
    */
   constructor(options: EchoRequestOptions = {}, requestCustom: EchoRequestCustom<TReq, TRes> = defaultRequest as EchoRequestCustom<TReq, TRes>) {
-    // Renamed types
     this.#interceptor = new Interceptor<TReq, TRes>();
     this.#defaultOptions = options;
     this.#request = requestCustom;
@@ -50,20 +49,22 @@ export class Echo<TReq = unknown, TRes = unknown> {
   /**
    * 发送请求
    * @param {string} url - 请求地址
-   * @param {TReq} data - 请求数据
-   * @param {Record<string, any>} options - 请求选项
+   * @param {TReq} [data] - 请求数据
+   * @param {EchoRequestOptions} [options] - 请求选项
    * @returns {EchoRequestHandle<R>} 请求响应句柄，包含 getTask 方法
    */
-  request<R = TRes>(url: string, data: TReq, options: EchoRequestOptions): EchoRequestHandle<R> {
+  request<R = TRes>(url: string, data?: TReq, options?: EchoRequestOptions): EchoRequestHandle<R> {
     let taskResolver: (task: EchoRequestTask) => void;
     const taskPromise = new Promise<EchoRequestTask>(resolve => {
       taskResolver = resolve;
     });
 
+    const combinedOptions = combineRequestOptions(this.#defaultOptions, options || {});
+
     const requestConfig: EchoRequestConfig<TReq> = {
       url,
       data,
-      options: combineRequestOptions(this.#defaultOptions, options),
+      options: combinedOptions,
       setTask: (_task: EchoRequestTask) => {
         const actualTask = _task;
         taskResolver?.(actualTask);
@@ -102,6 +103,10 @@ export class Echo<TReq = unknown, TRes = unknown> {
       executeRequest().then(resolve).catch(reject);
     });
 
+    /**
+     * 获取底层请求任务对象 (类型为 unknown)
+     * @returns {Promise<EchoRequestTask>}
+     */
     const getTask = (): Promise<EchoRequestTask> => taskPromise;
 
     return Object.assign(promise, { getTask }) as EchoRequestHandle<R>;
@@ -146,52 +151,48 @@ export class Echo<TReq = unknown, TRes = unknown> {
     return this.use(baseURLMiddleware(baseUrl));
   }
 
-  GET<R = TRes>(url: string, params?: unknown, options?: EchoRequestOptions): EchoRequestHandle<R> {
-    const requestOptions = combineRequestOptions(this.#defaultOptions, { ...options, method: 'GET' });
-    return this.request<R>(url, params as TReq, requestOptions);
+  GET<R = TRes>(url: string, data?: TReq, options?: EchoRequestOptions): EchoRequestHandle<R> {
+    return this.request<R>(url, data, { ...options, method: 'GET' });
   }
 
-  POST<R = TRes>(url: string, data?: unknown, options?: EchoRequestOptions): EchoRequestHandle<R> {
-    const requestOptions = combineRequestOptions(this.#defaultOptions, { ...options, method: 'POST' });
-    return this.request<R>(url, data as TReq, requestOptions);
+  POST<R = TRes>(url: string, data?: TReq, options?: EchoRequestOptions): EchoRequestHandle<R> {
+    return this.request<R>(url, data, { ...options, method: 'POST' });
   }
 
-  PUT<R = TRes>(url: string, data?: unknown, options?: EchoRequestOptions): EchoRequestHandle<R> {
-    const requestOptions = combineRequestOptions(this.#defaultOptions, { ...options, method: 'PUT' });
-    return this.request<R>(url, data as TReq, requestOptions);
+  PUT<R = TRes>(url: string, data?: TReq, options?: EchoRequestOptions): EchoRequestHandle<R> {
+    return this.request<R>(url, data, { ...options, method: 'PUT' });
   }
 
-  DELETE<R = TRes>(url: string, data?: unknown, options?: EchoRequestOptions): EchoRequestHandle<R> {
-    const requestOptions = combineRequestOptions(this.#defaultOptions, { ...options, method: 'DELETE' });
-    return this.request<R>(url, data as TReq, requestOptions);
+  DELETE<R = TRes>(url: string, data?: TReq, options?: EchoRequestOptions): EchoRequestHandle<R> {
+    return this.request<R>(url, data, { ...options, method: 'DELETE' });
   }
 
-  PATCH<R = TRes>(url: string, data?: unknown, options?: EchoRequestOptions): EchoRequestHandle<R> {
-    const requestOptions = combineRequestOptions(this.#defaultOptions, { ...options, method: 'PATCH' });
-    return this.request<R>(url, data as TReq, requestOptions);
+  PATCH<R = TRes>(url: string, data?: TReq, options?: EchoRequestOptions): EchoRequestHandle<R> {
+    return this.request<R>(url, data, { ...options, method: 'PATCH' });
   }
 
-  HEAD<R = TRes>(url: string, data?: unknown, options?: EchoRequestOptions): EchoRequestHandle<R> {
-    const requestOptions = combineRequestOptions(this.#defaultOptions, { ...options, method: 'HEAD' });
-    return this.request<R>(url, data as TReq, requestOptions);
+  HEAD<R = TRes>(url: string, data?: TReq, options?: EchoRequestOptions): EchoRequestHandle<R> {
+    return this.request<R>(url, data, { ...options, method: 'HEAD' });
   }
 
-  OPTIONS<R = TRes>(url: string, data?: unknown, options?: EchoRequestOptions): EchoRequestHandle<R> {
-    const requestOptions = combineRequestOptions(this.#defaultOptions, { ...options, method: 'OPTIONS' });
-    return this.request<R>(url, data as TReq, requestOptions);
+  OPTIONS<R = TRes>(url: string, data?: TReq, options?: EchoRequestOptions): EchoRequestHandle<R> {
+    return this.request<R>(url, data, { ...options, method: 'OPTIONS' });
   }
 }
 
 function combineRequestOptions(defaultOptions: EchoRequestOptions, options: EchoRequestOptions): EchoRequestOptions {
-  const { headers: defaultHeaders, ...restDefaultOptions } = defaultOptions || {};
-  const { headers: currentHeaders, ...restCurrentOptions } = options || {};
+  const { headers: defaultHeaders, method: defaultMethod, timeout: defaultTimeout, responseType: defaultResponseType, ...restDefaultOptions } = defaultOptions || {};
+  const { headers: currentHeaders, method: currentMethod, timeout: currentTimeout, responseType: currentResponseType, ...restCurrentOptions } = options || {};
 
   return {
     ...restDefaultOptions,
     ...restCurrentOptions,
+    method: currentMethod ?? defaultMethod,
     headers: {
       ...(defaultHeaders || {}),
       ...(currentHeaders || {})
-    }
+    },
+    timeout: currentTimeout ?? defaultTimeout,
+    responseType: currentResponseType ?? defaultResponseType
   };
 }
