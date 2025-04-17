@@ -9,9 +9,9 @@
   "types": "./dist/wx-echo.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/wx-echo.d.ts",
       "import": "./dist/wx-echo.js",
-      "require": "./dist/wx-echo.cjs",
-      "types": "./dist/wx-echo.d.ts"
+      "require": "./dist/wx-echo.cjs"
     },
     "./types": {
       "types": "./dist/types.d.ts"
