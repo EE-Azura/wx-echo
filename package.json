@@ -1,7 +1,7 @@
 {
   "name": "wx-echo",
   "version": "1.0.0",
-  "description": "",
+  "description": "A lightweight, middleware-based HTTP request library designed for WeChat Mini Programs.",
   "type": "module",
   "main": "dist/wx-echo.js",
   "commonjs": "dist/wx-echo.cjs",
