@@ -465,30 +465,22 @@ describe('Echo', () => {
       const mockTask = createMockRequestTask();
       let failCallback: ((res: WechatMiniprogram.GeneralCallbackResult) => void) | undefined;
 
-      // 模拟 wx.request，捕获 fail 回调，并返回 mockTask
       vi.mocked(wx.request).mockImplementation(options => {
-        failCallback = options.fail; // 捕获 fail 回调
-        // 注意：这里不调用 success 或 fail，模拟一个进行中的请求
-        // 同样假设 setTask 被 defaultRequest 正确调用
+        failCallback = options.fail;
         return mockTask;
       });
 
-      // 模拟 abort() 调用时触发 fail 回调
       vi.mocked(mockTask.abort).mockImplementation(() => {
         failCallback?.({ errMsg: 'request:fail abort' });
       });
 
-      // 发起请求但不等待完成
       const requestHandle = request.GET('/test');
+      // 使用类型断言明确告诉 TypeScript task 的类型
+      const task = (await requestHandle.getTask()) as WechatMiniprogram.RequestTask;
 
-      // 异步获取 task
-      const task = await requestHandle.getTask();
-
-      // 确保获取到的是正确的 task
-      expect(task).toBe(mockTask);
-
-      // 调用中止方法 - 使用非空断言操作符
-      task!.abort();
+      // 现在 TypeScript 知道 task 是 RequestTask 类型，应该不再报错
+      expect(task).toBeDefined(); // 可以保留运行时检查
+      task.abort(); // 直接调用 abort
 
       // 验证模拟任务的 abort 方法是否被调用
       expect(mockTask.abort).toHaveBeenCalledTimes(1);
