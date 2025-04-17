@@ -1,3 +1,5 @@
+简体中文 | [English](./README_en.md)
+
 # WX Echo
 
 [![npm 版本](https://img.shields.io/npm/v/wx-echo.svg?style=flat)](https://www.npmjs.com/package/wx-echo)
